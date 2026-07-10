@@ -523,25 +523,92 @@
 
 .settings-groups {
   display: grid;
-  gap: 1rem;
+  gap: 0.4rem;
+}
+
+.settings-group {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+}
+
+.settings-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.settings-group-toggle:disabled {
+  cursor: default;
+}
+
+.settings-group-toggle:hover:not(:disabled) {
+  background: rgba(20, 53, 47, 0.04);
+}
+
+.settings-group-toggle:focus-visible {
+  outline: 2px solid rgba(20, 53, 47, 0.35);
+  outline-offset: -2px;
+}
+
+.settings-group-chevron {
+  flex-shrink: 0;
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 1.5px solid var(--ink-soft);
+  border-bottom: 1.5px solid var(--ink-soft);
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+}
+
+.settings-group--open .settings-group-chevron {
+  transform: rotate(45deg);
 }
 
 .settings-group-title {
-  margin: 0 0 0.85rem;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
   font-family: var(--display);
-  font-size: 1.2rem;
+  font-size: 0.98rem;
   font-weight: 560;
   text-transform: capitalize;
   color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.settings-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+}
+
+.settings-group-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  white-space: nowrap;
 }
 
 .settings-list {
   display: grid;
-  gap: 1rem;
+  gap: 0.65rem;
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--line);
 }
 
 .settings-row {
-  padding-bottom: 1rem;
+  padding-bottom: 0.65rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -552,7 +619,7 @@
 
 .settings-key {
   font-family: ui-monospace, 'Cascadia Code', monospace;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   color: var(--ink);
 }
 
@@ -560,14 +627,29 @@
   font-style: normal;
   font-family: 'Figtree', system-ui, sans-serif;
   color: var(--ok);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 650;
 }
 
 .settings-desc {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--ink-soft);
-  line-height: 1.4;
+  line-height: 1.35;
+}
+
+.settings-row.dash-field {
+  gap: 0.25rem;
+}
+
+.settings-row.dash-field input,
+.settings-row.dash-field textarea,
+.settings-row.dash-field select {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.9rem;
+}
+
+.settings-row.dash-field textarea {
+  min-height: 64px;
 }
 
 .dash-secret-row {

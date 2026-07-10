@@ -30,6 +30,7 @@ export default function PlatformSettingsPage() {
   const [error, setError] = useState('')
   const [info, setInfo] = useState('')
   const [filter, setFilter] = useState('')
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -77,6 +78,22 @@ export default function PlatformSettingsPage() {
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [filtered])
+
+  const filtering = filter.trim().length > 0
+
+  function isGroupOpen(group: string) {
+    if (filtering) return true
+    return expanded[group] === true
+  }
+
+  function toggleGroup(group: string) {
+    if (filtering) return
+    setExpanded((prev) => ({ ...prev, [group]: !prev[group] }))
+  }
+
+  function dirtyCountFor(items: PlatformSetting[]) {
+    return items.filter((s) => drafts[s.settingKey] !== s.settingValue).length
+  }
 
   async function handleSave(e: FormEvent) {
     e.preventDefault()
@@ -236,6 +253,26 @@ export default function PlatformSettingsPage() {
             placeholder="Filter by key or description…"
           />
         </label>
+        {!filtering && groups.length > 0 ? (
+          <div className="dash-actions">
+            <button
+              type="button"
+              className="dash-btn dash-btn--ghost dash-btn--sm"
+              onClick={() =>
+                setExpanded(Object.fromEntries(groups.map(([g]) => [g, true])))
+              }
+            >
+              Expand all
+            </button>
+            <button
+              type="button"
+              className="dash-btn dash-btn--ghost dash-btn--sm"
+              onClick={() => setExpanded({})}
+            >
+              Collapse all
+            </button>
+          </div>
+        ) : null}
       </div>
 
       {loading ? (
@@ -244,28 +281,61 @@ export default function PlatformSettingsPage() {
         </div>
       ) : (
         <form className="settings-groups" onSubmit={handleSave}>
-          {groups.map(([group, items]) => (
-            <div key={group} className="dash-panel settings-group">
-              <h2 className="settings-group-title">{group}</h2>
-              <div className="settings-list">
-                {items.map((setting) => {
-                  const changed = drafts[setting.settingKey] !== setting.settingValue
-                  return (
-                    <label key={setting.id} className="dash-field settings-row">
-                      <span className="settings-key">
-                        {setting.settingKey}
-                        {changed ? <em className="settings-dirty"> · edited</em> : null}
-                      </span>
-                      {setting.description ? (
-                        <span className="settings-desc">{setting.description}</span>
-                      ) : null}
-                      {renderInput(setting)}
-                    </label>
-                  )
-                })}
+          {groups.map(([group, items]) => {
+            const open = isGroupOpen(group)
+            const dirtyInGroup = dirtyCountFor(items)
+            const panelId = `settings-group-${group}`
+
+            return (
+              <div
+                key={group}
+                className={`settings-group${open ? ' settings-group--open' : ''}`}
+              >
+                <button
+                  type="button"
+                  className="settings-group-toggle"
+                  aria-expanded={open}
+                  aria-controls={panelId}
+                  onClick={() => toggleGroup(group)}
+                  disabled={filtering}
+                >
+                  <span className="settings-group-chevron" aria-hidden="true" />
+                  <span className="settings-group-title">{group}</span>
+                  <span className="settings-group-meta">
+                    {dirtyInGroup > 0 ? (
+                      <em className="settings-dirty">{dirtyInGroup} edited</em>
+                    ) : null}
+                    <span className="settings-group-count">
+                      {items.length} setting{items.length === 1 ? '' : 's'}
+                    </span>
+                  </span>
+                </button>
+
+                {open ? (
+                  <div id={panelId} className="settings-list">
+                    {items.map((setting) => {
+                      const changed =
+                        drafts[setting.settingKey] !== setting.settingValue
+                      return (
+                        <label key={setting.id} className="dash-field settings-row">
+                          <span className="settings-key">
+                            {setting.settingKey}
+                            {changed ? (
+                              <em className="settings-dirty"> · edited</em>
+                            ) : null}
+                          </span>
+                          {setting.description ? (
+                            <span className="settings-desc">{setting.description}</span>
+                          ) : null}
+                          {renderInput(setting)}
+                        </label>
+                      )
+                    })}
+                  </div>
+                ) : null}
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {groups.length === 0 ? (
             <div className="dash-panel">
@@ -276,7 +346,9 @@ export default function PlatformSettingsPage() {
           {canUpdate && dirty.length > 0 ? (
             <div className="dash-actions">
               <button type="submit" className="dash-btn" disabled={saving}>
-                {saving ? 'Saving…' : `Save ${dirty.length} change${dirty.length === 1 ? '' : 's'}`}
+                {saving
+                  ? 'Saving…'
+                  : `Save ${dirty.length} change${dirty.length === 1 ? '' : 's'}`}
               </button>
             </div>
           ) : null}
