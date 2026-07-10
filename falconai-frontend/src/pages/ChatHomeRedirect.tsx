@@ -4,7 +4,6 @@ import { useConversationsStore } from '../store/conversationsStore'
 
 /** Sends `/` to the latest conversation, or creates one if none exist. */
 export default function ChatHomeRedirect() {
-  const conversations = useConversationsStore((s) => s.conversations)
   const loading = useConversationsStore((s) => s.loading)
   const load = useConversationsStore((s) => s.load)
   const create = useConversationsStore((s) => s.create)
