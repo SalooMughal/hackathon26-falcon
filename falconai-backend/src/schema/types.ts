@@ -1,5 +1,18 @@
 import { eq, InferInsertModel, InferSelectModel } from "drizzle-orm";
-import { acls, features, permissions, platformSettings, notifications, role_feature_permissions, role_features, roles, users } from "./tables";
+import {
+  acls,
+  features,
+  permissions,
+  platformSettings,
+  notifications,
+  role_feature_permissions,
+  role_features,
+  roles,
+  users,
+  knowledgeDocuments,
+  knowledgeChunks,
+  chatMessages,
+} from "./tables";
 import { db } from "@app/config/db";
 
 export type IUser = InferSelectModel<typeof users>;
@@ -11,6 +24,9 @@ export type IRoleFeaturePermission = InferSelectModel<typeof role_feature_permis
 export type IACL = InferSelectModel<typeof acls>;
 export type IPlatformSetting = InferSelectModel<typeof platformSettings>;
 export type INotification = InferSelectModel<typeof notifications>;
+export type IKnowledgeDocument = InferSelectModel<typeof knowledgeDocuments>;
+export type IKnowledgeChunk = InferSelectModel<typeof knowledgeChunks>;
+export type IChatMessage = InferSelectModel<typeof chatMessages>;
 
 export type INewUser = InferInsertModel<typeof users>;
 export type INewRole = InferInsertModel<typeof roles>;
@@ -21,6 +37,9 @@ export type INewRoleFeaturePermission = InferInsertModel<typeof role_feature_per
 export type INewACL = InferInsertModel<typeof acls>;
 export type INewPlatformSetting = InferInsertModel<typeof platformSettings>;
 export type INewNotification = InferInsertModel<typeof notifications>;
+export type INewKnowledgeDocument = InferInsertModel<typeof knowledgeDocuments>;
+export type INewKnowledgeChunk = InferInsertModel<typeof knowledgeChunks>;
+export type INewChatMessage = InferInsertModel<typeof chatMessages>;
 
 const query = db.query.users.findFirst({
   where: eq(users.id, ""),

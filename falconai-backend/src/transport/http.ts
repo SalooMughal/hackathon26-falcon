@@ -1,6 +1,8 @@
 import statusCodes from "@app/constants/statusCodes";
 import authRouter from "@app/modules/auth/routes";
+import chatRouter from "@app/modules/chat/routes";
 import featureRouter from "@app/modules/features/routes";
+import knowledgeBaseRouter from "@app/modules/knowledge-base/routes";
 import notificationsRouter from "@app/modules/notifications/routes";
 import platformSettingsRouter from "@app/modules/platform-settings/routes";
 import rolesRouter from "@app/modules/roles/routes";
@@ -28,5 +30,7 @@ httpRouter.use("/v1/users", usersRouter);
 httpRouter.use("/v1/sessions", sessionsRouter);
 httpRouter.use("/v1/platform-settings", platformSettingsRouter);
 httpRouter.use("/v1/notifications", notificationsRouter);
+httpRouter.use("/v1/knowledge-base", knowledgeBaseRouter);
+httpRouter.use("/v1/chat", chatRouter);
 
 export default httpRouter;

@@ -2,8 +2,10 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './layouts/AppShell'
 import ChatPage from './pages/ChatPage'
 import FeaturesPage from './pages/features/FeaturesPage'
+import KnowledgeBasePage from './pages/knowledge-base/KnowledgeBasePage'
 import LoginPage from './pages/LoginPage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import PlatformSettingsPage from './pages/platform-settings/PlatformSettingsPage'
 import RoleDetailPage from './pages/roles/RoleDetailPage'
 import RolesPage from './pages/roles/RolesPage'
 import ProtectedRoute from './routes/ProtectedRoute'
@@ -67,10 +69,18 @@ export default function App() {
               }
             />
             <Route
+              path="knowledge-base"
+              element={
+                <RequirePermission feature="knowledge-base">
+                  <KnowledgeBasePage />
+                </RequirePermission>
+              }
+            />
+            <Route
               path="platform-settings"
               element={
                 <RequirePermission feature="platform-settings">
-                  <PlaceholderPage />
+                  <PlatformSettingsPage />
                 </RequirePermission>
               }
             />

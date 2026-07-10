@@ -8,6 +8,13 @@
       "when": 1783689111284,
       "tag": "0000_adorable_jackal",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783691564190,
+      "tag": "0001_public_sunfire",
+      "breakpoints": true
     }
   ]
 }

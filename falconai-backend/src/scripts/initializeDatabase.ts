@@ -10,10 +10,13 @@ import { promisify } from "util";
 import { db } from "@app/config/db";
 import { eq, and } from "drizzle-orm";
 import type { InferModel } from "drizzle-orm";
-import { permissions, features, roles, role_features, role_feature_permissions, platformSettings, users } from "@app/schema/tables";
+import { permissions, features, roles, role_features, role_feature_permissions, platformSettings, users, knowledgeDocuments } from "@app/schema/tables";
 import { permissions as defaultPermissions, features as defaultFeatures, UserRoles, defaultPlatformSettings } from "@app/constants/defaults";
 import logger from "@app/services/logging/logger";
 import { methods } from "@app/utils/methods";
+import { sampleKnowledgeDocs } from "@app/modules/knowledge-base/sample-docs";
+import { knowledgeBaseService } from "@app/modules/knowledge-base/knowledge-base.service";
+import { pineconeService } from "@app/services/pinecone/client";
 
 const execAsync = promisify(exec);
 
@@ -200,6 +203,9 @@ export async function initializeDatabase() {
     // Step 6: Ensure a super-admin user exists
     await createSuperAdminUser();
 
+    // Step 7: Seed sample knowledge docs (indexes when Pinecone + OpenAI are configured)
+    await seedSampleKnowledgeDocs();
+
     logger.info("\n✅ Database initialization completed successfully!");
   } catch (error) {
     logger.error("\n Database initialization failed:", error);
@@ -267,5 +273,47 @@ async function createSuperAdminUser() {
     logger.info(`Super-admin user created with id ${inserted.id}`);
   } catch (error) {
     logger.error("Error creating super-admin user:", error);
+  }
+}
+
+async function seedSampleKnowledgeDocs() {
+  logger.info("\nSeeding sample knowledge base documents...");
+
+  try {
+    for (const doc of sampleKnowledgeDocs) {
+      const [existing] = await db
+        .select()
+        .from(knowledgeDocuments)
+        .where(eq(knowledgeDocuments.filename, doc.filename))
+        .limit(1);
+
+      if (existing) {
+        logger.info(`Knowledge doc already exists: ${doc.filename}`);
+        continue;
+      }
+
+      if (pineconeService.isPineconeConfigured() && (process.env.OPENAI_API_KEY || "").length > 0) {
+        const result = await knowledgeBaseService.createDocument(doc);
+        if (result.error && !result.document) {
+          logger.warn(`Failed to create/index ${doc.filename}: ${result.error.message}`);
+        } else if (result.error) {
+          logger.warn(`Created ${doc.filename} but indexing failed: ${result.error.message}`);
+        } else {
+          logger.info(`Created and indexed knowledge doc: ${doc.filename}`);
+        }
+      } else {
+        await db.insert(knowledgeDocuments).values({
+          title: doc.title,
+          filename: doc.filename,
+          content: doc.content,
+          status: "pending",
+          chunkCount: 0,
+          errorMessage: "Awaiting Pinecone/OpenAI configuration for indexing",
+        });
+        logger.info(`Inserted pending knowledge doc (not indexed yet): ${doc.filename}`);
+      }
+    }
+  } catch (error) {
+    logger.error("Error seeding sample knowledge docs:", error);
   }
 }

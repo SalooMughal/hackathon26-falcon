@@ -7,15 +7,24 @@
   --line: rgba(20, 53, 47, 0.12);
   --display: 'Fraunces', Georgia, serif;
   --sans: 'Figtree', 'Segoe UI', sans-serif;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 76px;
 
   display: grid;
-  grid-template-columns: 260px 1fr;
-  min-height: 100svh;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
   background:
     radial-gradient(ellipse 70% 40% at 100% 0%, rgba(197, 216, 224, 0.55), transparent 55%),
     linear-gradient(180deg, #dfeaf0 0%, var(--mist) 40%, #ebe6db 100%);
   color: var(--ink);
   font-family: var(--sans);
+  transition: grid-template-columns 220ms ease;
+}
+
+.app-shell--collapsed {
+  --sidebar-width: var(--sidebar-collapsed);
 }
 
 .app-shell-backdrop {
@@ -25,19 +34,32 @@
 .app-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  padding: 1.35rem 1rem 1.15rem;
+  gap: 1rem;
+  padding: 1.1rem 0.75rem 1rem;
   border-right: 1px solid var(--line);
   background: rgba(255, 252, 247, 0.72);
   backdrop-filter: blur(12px);
-  min-height: 100svh;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-sidebar-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  padding: 0 0.2rem;
 }
 
 .app-sidebar-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 0.35rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .app-sidebar-mark {
@@ -47,6 +69,13 @@
   flex-shrink: 0;
 }
 
+.app-sidebar-brand-text {
+  min-width: 0;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
 .app-sidebar-name {
   margin: 0;
   font-family: var(--display);
@@ -54,30 +83,67 @@
   font-weight: 560;
   letter-spacing: -0.03em;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .app-sidebar-sub {
   margin: 0.2rem 0 0;
   font-size: 0.78rem;
   color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.app-collapse-btn {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.app-collapse-btn:hover {
+  color: var(--ink);
+  background: rgba(20, 53, 47, 0.05);
+  border-color: var(--line);
 }
 
 .app-sidebar-nav {
   display: grid;
   gap: 0.25rem;
   flex: 1;
+  min-height: 0;
   align-content: start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-right: 0.15rem;
+}
+
+.app-nav-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
 }
 
 .app-nav-link {
-  display: block;
-  padding: 0.7rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
   color: var(--ink-soft);
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
   border: 1px solid transparent;
-  transition: background 140ms ease, color 140ms ease;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .app-nav-link:hover {
@@ -91,24 +157,66 @@
   border-color: var(--line);
 }
 
+.app-nav-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 140ms ease;
+}
+
 .app-sidebar-footer {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.65rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.app-user {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  padding: 0 0.25rem;
+}
+
+.app-user-avatar {
+  width: 2.15rem;
+  height: 2.15rem;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: #f7f3ea;
+  background: #14352f;
+}
+
+.app-user-text {
+  min-width: 0;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 140ms ease;
 }
 
 .app-user-name {
   margin: 0;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-user-email,
 .app-user-role {
-  margin: 0.15rem 0 0;
-  font-size: 0.8rem;
+  margin: 0.12rem 0 0;
+  font-size: 0.78rem;
   color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-user-role {
@@ -117,14 +225,20 @@
 
 .app-signout,
 .app-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
   border: 1px solid var(--line);
   background: transparent;
   color: var(--ink);
   font: inherit;
   font-weight: 650;
   font-size: 0.88rem;
-  padding: 0.65rem 0.85rem;
+  padding: 0.65rem 0.75rem;
   cursor: pointer;
+  width: 100%;
+  white-space: nowrap;
 }
 
 .app-signout:hover:not(:disabled),
@@ -137,28 +251,97 @@
   cursor: wait;
 }
 
+/* Collapsed desktop sidebar — icons only */
+.app-shell--collapsed .app-sidebar {
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
+
+.app-shell--collapsed .app-sidebar-head {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.app-shell--collapsed .app-sidebar-brand-text,
+.app-shell--collapsed .app-nav-label,
+.app-shell--collapsed .app-user-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-shell--collapsed .app-sidebar-brand {
+  justify-content: center;
+}
+
+.app-shell--collapsed .app-nav-link,
+.app-shell--collapsed .app-signout {
+  justify-content: center;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+}
+
+.app-shell--collapsed .app-user {
+  justify-content: center;
+  padding: 0;
+}
+
+.app-shell--collapsed .app-collapse-btn {
+  width: 100%;
+}
+
 .app-main {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
+  overflow: hidden;
 }
 
 .app-topbar {
   display: none;
+  flex-shrink: 0;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 252, 247, 0.65);
 }
 
+.app-menu-btn {
+  width: auto;
+}
+
 .app-content {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: clamp(1.25rem, 3vw, 2rem);
   width: min(1100px, 100%);
 }
 
+.app-content--chat {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 @media (max-width: 900px) {
-  .app-shell {
+  .app-shell,
+  .app-shell--collapsed {
+    --sidebar-width: 1fr;
     grid-template-columns: 1fr;
   }
 
@@ -182,10 +365,47 @@
     position: fixed;
     inset: 0 auto 0 0;
     width: min(280px, 86vw);
+    height: 100svh;
     z-index: 30;
     transform: translateX(-105%);
     transition: transform 200ms ease;
     box-shadow: none;
+    padding: 1.1rem 0.85rem 1rem;
+  }
+
+  /* Mobile drawer always shows labels */
+  .app-shell--collapsed .app-sidebar-brand-text,
+  .app-shell--collapsed .app-nav-label,
+  .app-shell--collapsed .app-user-text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    clip: auto;
+    overflow: visible;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-shell--collapsed .app-sidebar-head {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .app-shell--collapsed .app-nav-link,
+  .app-shell--collapsed .app-signout {
+    justify-content: flex-start;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .app-shell--collapsed .app-user {
+    justify-content: flex-start;
+    padding: 0 0.25rem;
+  }
+
+  .app-collapse-btn {
+    display: none;
   }
 
   .app-shell--nav-open .app-sidebar {

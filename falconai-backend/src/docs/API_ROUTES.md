@@ -19,6 +19,8 @@ All routes are prefixed with `/v1`
 5. [Sessions](#sessions)
 6. [Platform Settings](#platform-settings)
 7. [Notifications](#notifications)
+8. [Knowledge Base](#knowledge-base)
+9. [Chat](#chat)
 
 ---
 
@@ -956,6 +958,140 @@ status: "read" | "un-read" | "archived" (optional)
 
 ---
 
+## Knowledge Base
+
+**Base Path:** `/v1/knowledge-base`
+
+Admin-only module for uploading markdown documents that power the RAG chatbot.
+
+### GET /read/get-all
+
+**Description:** List knowledge documents (metadata only)
+**Authentication:** Required (`knowledge-base` read)
+**Query Parameters:** `page`, `limit`, `search` (optional)
+
+### GET /read/get-one
+
+**Description:** Get one document including chunk metadata
+**Authentication:** Required (`knowledge-base` read)
+**Query Parameters:** `documentId` (uuid, required)
+
+### POST /create
+
+**Description:** Create a markdown document, chunk it, embed with OpenAI, and upsert vectors to Pinecone
+**Authentication:** Required (`knowledge-base` create)
+**Request Body:**
+
+```json
+{
+  "title": "string (required)",
+  "filename": "string (optional, must end with .md)",
+  "content": "string (markdown, required)"
+}
+```
+
+### POST /update
+
+**Description:** Update document fields and re-index when content/title/filename change
+**Authentication:** Required (`knowledge-base` update)
+**Request Body:**
+
+```json
+{
+  "documentId": "uuid (required)",
+  "title": "string (optional)",
+  "filename": "string (optional)",
+  "content": "string (optional)"
+}
+```
+
+### POST /delete
+
+**Description:** Delete document, chunks, and Pinecone vectors
+**Authentication:** Required (`knowledge-base` delete)
+**Request Body:**
+
+```json
+{
+  "documentId": "uuid (required)"
+}
+```
+
+---
+
+## Chat
+
+**Base Path:** `/v1/chat`
+
+Grounded RAG Q&A for any signed-in user with the `chat` feature.
+
+### POST /create/ask
+
+**Description:** Ask a question. Retrieves top chunks from Pinecone, refuses when similarity is below `ai.rag_min_score`, otherwise answers with the active LLM and citations.
+**Authentication:** Required (`chat` create)
+**Request Body:**
+
+```json
+{
+  "question": "string (required, 3-2000 chars)"
+}
+```
+
+**Response:**
+
+```json
+{
+  "code": 1000,
+  "message": "Answer generated",
+  "answer": "string",
+  "citations": [
+    {
+      "documentId": "uuid",
+      "title": "string",
+      "filename": "setup-guide.md",
+      "chunkIndex": 0
+    }
+  ],
+  "grounded": true,
+  "provider": "openai"
+}
+```
+
+When ungrounded, `grounded` is `false`, `citations` is `[]`, and `answer` explains that the docs do not cover the question.
+
+### POST /create/ask-stream
+
+**Description:** Same RAG pipeline as `/create/ask`, but streams the answer as Server-Sent Events (SSE).
+**Authentication:** Required (`chat` create)
+**Request Body:** same as `/create/ask`
+**Response:** `text/event-stream` with JSON payloads:
+
+```
+data: {"type":"status","message":"Searching the knowledge base…"}
+
+data: {"type":"token","content":"partial text"}
+
+data: {"type":"done","answer":"full text","citations":[...],"grounded":true,"provider":"openai"}
+
+data: [DONE]
+```
+
+Error events use `{"type":"error","message":"...","code":...}`.
+
+### GET /read/history
+
+**Description:** Get the current user's recent chat messages
+**Authentication:** Required (`chat` read)
+**Query Parameters:** `limit` (optional, default 50)
+
+### POST /delete/history
+
+**Description:** Clear the current user's chat history
+**Authentication:** Required (`chat` delete)
+**Request Body:** `{}`
+
+---
+
 ## Authentication Details
 
 ### Bearer Token
@@ -1069,6 +1205,6 @@ All protected routes follow this middleware order:
 ## Version
 
 **API Version:** 1.0.0
-**Last Updated:** 2026-04-08
+**Last Updated:** 2026-07-10
 
 For any questions or issues, please contact the backend development team.

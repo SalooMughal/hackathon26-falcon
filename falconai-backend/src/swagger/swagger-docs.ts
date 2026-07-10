@@ -46,6 +46,8 @@ export const options = {
     `${baseDir}/modules/sessions/session.docs.${fileExt}`,
     `${baseDir}/modules/platform-settings/platform-settings.docs.${fileExt}`,
     `${baseDir}/modules/notifications/notifications.docs.${fileExt}`,
+    `${baseDir}/modules/knowledge-base/knowledge-base.docs.${fileExt}`,
+    `${baseDir}/modules/chat/chat.docs.${fileExt}`,
   ],
 };
 

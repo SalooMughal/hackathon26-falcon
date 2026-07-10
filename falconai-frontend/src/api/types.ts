@@ -45,3 +45,44 @@ export type Role = {
   updatedAt?: string
   roleFeatures?: RoleFeature[]
 }
+
+export type KnowledgeDocumentStatus = 'pending' | 'indexed' | 'failed'
+
+export type KnowledgeDocument = {
+  id: string
+  title: string
+  filename: string
+  content?: string
+  status: KnowledgeDocumentStatus
+  chunkCount: number
+  errorMessage?: string | null
+  createdBy?: string | null
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type PlatformSetting = {
+  id: string
+  settingKey: string
+  settingValue: string
+  settingType: 'string' | 'number' | 'boolean' | 'json'
+  description?: string | null
+  updatedBy?: string | null
+  updatedAt?: string
+}
+
+export type ChatCitation = {
+  documentId: string
+  title: string
+  filename: string
+  chunkIndex?: number
+}
+
+export type ChatMessage = {
+  id: string
+  userId: string
+  role: 'user' | 'assistant'
+  content: string
+  citations: ChatCitation[]
+  createdAt: string
+}

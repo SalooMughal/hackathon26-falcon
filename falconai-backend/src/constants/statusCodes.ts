@@ -33,6 +33,11 @@ const statusCodes = {
   EmailNotVerified: { statusCode: 400, code: 4023, message: "Please verify your email before signing in" },
   SocialLogin: { statusCode: 400, code: 4024, message: "This account was registered via social login. Please use social login to sign in" },
   InvalidUserRole: { statusCode: 400, code: 4025, message: "Invalid user role specified" },
+  KnowledgeDocumentNotFound: { statusCode: 404, code: 4026, message: "Knowledge document not found" },
+  KnowledgeDocumentExists: { statusCode: 409, code: 4027, message: "A knowledge document with this filename already exists" },
+  AiNotConfigured: { statusCode: 503, code: 5031, message: "AI provider is not configured. Check platform settings." },
+  PineconeNotConfigured: { statusCode: 503, code: 5032, message: "Pinecone is not configured. Check environment variables." },
+  RagIndexingFailed: { statusCode: 500, code: 5002, message: "Failed to index document into the knowledge base" },
 
   InternalServerError: { statusCode: 500, code: 5000, message: "An unexpected error occurred. Please try again later" },
   DatabaseError: { statusCode: 500, code: 5001, message: "Database operation failed. Please try again later" },
