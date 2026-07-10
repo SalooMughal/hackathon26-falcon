@@ -16,11 +16,9 @@ export const NAV_ITEMS: NavItem[] = [
     path: '/knowledge-base',
     icon: 'knowledge',
   },
-  { feature: 'admin-stats', label: 'Admin stats', path: '/admin-stats', icon: 'stats' },
   { feature: 'users', label: 'Users', path: '/users', icon: 'users' },
   { feature: 'roles', label: 'Roles', path: '/roles', icon: 'roles' },
   { feature: 'features', label: 'Features', path: '/features', icon: 'features' },
-  { feature: 'sessions', label: 'Sessions', path: '/sessions', icon: 'sessions' },
   {
     feature: 'notifications',
     label: 'Noticeboard',
