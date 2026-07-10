@@ -1,5 +1,5 @@
 // Define allowed origins (NO "*" when using credentials: true)
-export const allowedOrigins = ["*"];
+export const allowedOrigins = ["https://chic-charm-production-38ed.up.railway.app"];
 
 // CORS configuration
 export const corsOptions = {
