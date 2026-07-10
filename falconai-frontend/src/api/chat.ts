@@ -1,5 +1,5 @@
 import { apiRequest } from './client'
-import type { ChatCitation, ChatConversation, ChatMessage } from './types'
+import type { ChatCitation, ChatConversation, ChatMessage, CitationSource } from './types'
 
 type ConversationsResponse = {
   code: number
@@ -18,6 +18,12 @@ type HistoryResponse = {
   message: string
   conversation: ChatConversation
   messages: ChatMessage[]
+}
+
+type SourceResponse = {
+  code: number
+  message: string
+  source: CitationSource
 }
 
 type MessageResponse = {
@@ -76,6 +82,17 @@ export async function getChatHistory(conversationId: string, limit = 100) {
     method: 'GET',
     url: '/v1/chat/read/history',
     params: { conversationId, limit },
+  })
+}
+
+export async function getCitationSource(documentId: string, chunkIndex?: number) {
+  return apiRequest<SourceResponse>({
+    method: 'GET',
+    url: '/v1/chat/read/source',
+    params: {
+      documentId,
+      ...(typeof chunkIndex === 'number' ? { chunkIndex } : {}),
+    },
   })
 }
 

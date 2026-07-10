@@ -15,7 +15,13 @@ export type RagContext = {
 
 export type GroundedAnswer = {
   answer: string;
-  citations: Array<{ documentId: string; title: string; filename: string; chunkIndex?: number }>;
+  citations: Array<{
+    documentId: string;
+    title: string;
+    filename: string;
+    chunkIndex?: number;
+    content?: string;
+  }>;
   grounded: boolean;
   provider: string;
 };
@@ -68,6 +74,7 @@ function citationsFromContexts(contexts: RagContext[]) {
     title: ctx.title,
     filename: ctx.filename,
     chunkIndex: ctx.chunkIndex,
+    content: ctx.content,
   }));
 }
 
@@ -111,6 +118,7 @@ function mapCitations(contexts: RagContext[], filenames: string[]) {
       title: ctx!.title,
       filename: ctx!.filename,
       chunkIndex: ctx!.chunkIndex,
+      content: ctx!.content,
     }));
 
   // Fallback: if model forgot filenames but claimed grounded, cite all retrieved docs
@@ -122,6 +130,7 @@ function mapCitations(contexts: RagContext[], filenames: string[]) {
       title: ctx.title,
       filename: ctx.filename,
       chunkIndex: ctx.chunkIndex,
+      content: ctx.content,
     }));
   }
 

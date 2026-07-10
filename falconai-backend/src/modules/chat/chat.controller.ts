@@ -8,6 +8,7 @@ import {
   ICreateConversationInput,
   IDeleteConversationInput,
   IGetChatHistoryInput,
+  IGetCitationSourceInput,
   IListConversationsInput,
   IUpdateConversationInput,
 } from "./validations";
@@ -162,6 +163,22 @@ const history = async (req: Request, res: Response) => {
   }
 };
 
+const citationSource = async (req: Request, res: Response) => {
+  try {
+    const { documentId, chunkIndex } = req.query as unknown as IGetCitationSourceInput;
+    const userId = req.user?.id;
+    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const { error, source } = await chatService.getCitationSource(documentId, chunkIndex);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Citation source retrieved", { source });
+  } catch (error) {
+    logger.error("Error in citationSource controller:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
 export const chatController = {
   listConversations,
   createConversation,
@@ -170,4 +187,5 @@ export const chatController = {
   ask,
   askStream,
   history,
+  citationSource,
 };

@@ -1,8 +1,8 @@
 import rateLimit from "express-rate-limit";
 
 export const limiter = rateLimit({
-  windowMs: 2 * 60 * 1000, // 2 minutes
-  max: Number(process.env.API_RATE_LIMIT_MAX ?? 200),
+  windowMs: 1 * 60 * 1000, // 1 minutes
+  max: 500,
   message: { message: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,

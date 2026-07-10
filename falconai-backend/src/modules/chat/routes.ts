@@ -8,6 +8,7 @@ import {
   createConversationSchema,
   deleteConversationSchema,
   getChatHistorySchema,
+  getCitationSourceSchema,
   listConversationsSchema,
   updateConversationSchema,
 } from "./validations";
@@ -22,6 +23,13 @@ chatRouter.get(
   chatController.listConversations,
 );
 chatRouter.get("/read/history", validate(getChatHistorySchema, "query"), verifyToken, checkPermissions, chatController.history);
+chatRouter.get(
+  "/read/source",
+  validate(getCitationSourceSchema, "query"),
+  verifyToken,
+  checkPermissions,
+  chatController.citationSource,
+);
 
 chatRouter.post(
   "/create/conversation",

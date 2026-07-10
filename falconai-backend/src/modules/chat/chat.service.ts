@@ -1,13 +1,13 @@
 import { db } from "@app/config/db";
 import statusCodes from "@app/constants/statusCodes";
 import { getPlatformSetting } from "@app/modules/platform-settings/platform-settings.service";
-import { chatConversations, chatMessages, knowledgeChunks } from "@app/schema/tables";
+import { chatConversations, chatMessages, knowledgeChunks, knowledgeDocuments } from "@app/schema/tables";
 import { INewChatMessage } from "@app/schema/types";
 import { embeddingsService } from "@app/services/ai/embeddings";
 import { llmService, type RagContext } from "@app/services/ai/llm";
 import logger from "@app/services/logging/logger";
 import { pineconeService } from "@app/services/pinecone/client";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 const REFUSAL_MESSAGE =
   "I don't have enough information in the knowledge base to answer that. Try asking about project setup, team norms, architecture, or onboarding.";
@@ -18,7 +18,13 @@ export type ChatStreamEvent =
   | {
       type: "done";
       answer: string;
-      citations: Array<{ documentId: string; title: string; filename: string; chunkIndex?: number }>;
+      citations: Array<{
+        documentId: string;
+        title: string;
+        filename: string;
+        chunkIndex?: number;
+        content?: string;
+      }>;
       grounded: boolean;
       provider: string | null;
       conversationId: string;
@@ -373,6 +379,62 @@ const getHistory = async (userId: string, conversationId: string, limit = 100) =
   }
 };
 
+const getCitationSource = async (documentId: string, chunkIndex?: number) => {
+  try {
+    const document = await db.query.knowledgeDocuments.findFirst({
+      where: eq(knowledgeDocuments.id, documentId),
+    });
+    if (!document) return { error: statusCodes.KnowledgeDocumentNotFound };
+
+    let chunk = null as typeof knowledgeChunks.$inferSelect | null;
+    if (typeof chunkIndex === "number") {
+      const [row] = await db
+        .select()
+        .from(knowledgeChunks)
+        .where(and(eq(knowledgeChunks.documentId, documentId), eq(knowledgeChunks.chunkIndex, chunkIndex)))
+        .limit(1);
+      chunk = row || null;
+    }
+
+    if (!chunk) {
+      const [row] = await db
+        .select()
+        .from(knowledgeChunks)
+        .where(eq(knowledgeChunks.documentId, documentId))
+        .orderBy(asc(knowledgeChunks.chunkIndex))
+        .limit(1);
+      chunk = row || null;
+    }
+
+    if (!chunk) {
+      return {
+        source: {
+          documentId: document.id,
+          title: document.title,
+          filename: document.filename,
+          chunkIndex: 0,
+          excerpt: "",
+          documentContent: document.content,
+        },
+      };
+    }
+
+    return {
+      source: {
+        documentId: document.id,
+        title: document.title,
+        filename: document.filename,
+        chunkIndex: chunk.chunkIndex,
+        excerpt: chunk.content,
+        documentContent: document.content,
+      },
+    };
+  } catch (error) {
+    logger.error(`Error in getCitationSource: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
 export const chatService = {
   listConversations,
   createConversation,
@@ -381,4 +443,5 @@ export const chatService = {
   ask,
   askStream,
   getHistory,
+  getCitationSource,
 };

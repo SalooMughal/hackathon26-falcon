@@ -25,6 +25,7 @@
 .chat-scroll,
 .chat-thread,
 .dash-modal--wide,
+.citation-modal-body,
 .feature-picker,
 .settings-groups {
   scrollbar-width: thin;
@@ -37,6 +38,7 @@
 .chat-scroll::-webkit-scrollbar,
 .chat-thread::-webkit-scrollbar,
 .dash-modal--wide::-webkit-scrollbar,
+.citation-modal-body::-webkit-scrollbar,
 .feature-picker::-webkit-scrollbar,
 .settings-groups::-webkit-scrollbar {
   width: var(--scroll-size);
@@ -49,6 +51,7 @@
 .chat-scroll::-webkit-scrollbar-track,
 .chat-thread::-webkit-scrollbar-track,
 .dash-modal--wide::-webkit-scrollbar-track,
+.citation-modal-body::-webkit-scrollbar-track,
 .feature-picker::-webkit-scrollbar-track,
 .settings-groups::-webkit-scrollbar-track {
   background: transparent;
@@ -61,6 +64,7 @@
 .chat-scroll::-webkit-scrollbar-thumb,
 .chat-thread::-webkit-scrollbar-thumb,
 .dash-modal--wide::-webkit-scrollbar-thumb,
+.citation-modal-body::-webkit-scrollbar-thumb,
 .feature-picker::-webkit-scrollbar-thumb,
 .settings-groups::-webkit-scrollbar-thumb {
   background-color: var(--scroll-thumb);
@@ -76,6 +80,7 @@
 .chat-scroll::-webkit-scrollbar-thumb:hover,
 .chat-thread::-webkit-scrollbar-thumb:hover,
 .dash-modal--wide::-webkit-scrollbar-thumb:hover,
+.citation-modal-body::-webkit-scrollbar-thumb:hover,
 .feature-picker::-webkit-scrollbar-thumb:hover,
 .settings-groups::-webkit-scrollbar-thumb:hover {
   background-color: var(--scroll-thumb-hover);
@@ -87,6 +92,7 @@
 .chat-scroll::-webkit-scrollbar-thumb:active,
 .chat-thread::-webkit-scrollbar-thumb:active,
 .dash-modal--wide::-webkit-scrollbar-thumb:active,
+.citation-modal-body::-webkit-scrollbar-thumb:active,
 .feature-picker::-webkit-scrollbar-thumb:active,
 .settings-groups::-webkit-scrollbar-thumb:active {
   background-color: var(--scroll-thumb-active);
@@ -98,6 +104,7 @@
 .chat-scroll::-webkit-scrollbar-corner,
 .chat-thread::-webkit-scrollbar-corner,
 .dash-modal--wide::-webkit-scrollbar-corner,
+.citation-modal-body::-webkit-scrollbar-corner,
 .feature-picker::-webkit-scrollbar-corner,
 .settings-groups::-webkit-scrollbar-corner {
   background: transparent;

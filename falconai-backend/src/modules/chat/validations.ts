@@ -10,6 +10,11 @@ export const getChatHistorySchema = z.object({
   limit: z.coerce.number().int().positive().max(200).optional().default(100),
 });
 
+export const getCitationSourceSchema = z.object({
+  documentId: z.uuid("Invalid document ID"),
+  chunkIndex: z.coerce.number().int().nonnegative().optional(),
+});
+
 export const listConversationsSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional().default(50),
 });
@@ -33,6 +38,7 @@ export const deleteConversationSchema = z.object({
 
 export type IAskChatInput = z.infer<typeof askChatSchema>;
 export type IGetChatHistoryInput = z.infer<typeof getChatHistorySchema>;
+export type IGetCitationSourceInput = z.infer<typeof getCitationSourceSchema>;
 export type IListConversationsInput = z.infer<typeof listConversationsSchema>;
 export type IGetConversationInput = z.infer<typeof getConversationSchema>;
 export type ICreateConversationInput = z.infer<typeof createConversationSchema>;

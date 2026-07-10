@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { askChatStream, getChatHistory } from '../api/chat'
 import type { ChatCitation, ChatMessage } from '../api/types'
+import CitationSourceModal from '../components/CitationSourceModal'
 import { usePermissions } from '../lib/permissions'
 import { useConversationsStore } from '../store/conversationsStore'
 import '../styles/dashboard.css'
@@ -44,6 +45,7 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
+  const [activeCitation, setActiveCitation] = useState<ChatCitation | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -300,8 +302,14 @@ export default function ChatPage() {
                       <ul className="chat-citations">
                         {msg.citations.map((c) => (
                           <li key={`${msg.id}-${c.documentId}-${c.chunkIndex ?? 0}`}>
-                            {c.title}
-                            <span> · {c.filename}</span>
+                            <button
+                              type="button"
+                              className="chat-citation-btn"
+                              onClick={() => setActiveCitation(c)}
+                            >
+                              {c.title}
+                              <span> · {c.filename}</span>
+                            </button>
                           </li>
                         ))}
                       </ul>
@@ -357,6 +365,11 @@ export default function ChatPage() {
         </form>
         <p className="chat-disclaimer">Answers are grounded in your knowledge base.</p>
       </div>
+
+      <CitationSourceModal
+        citation={activeCitation}
+        onClose={() => setActiveCitation(null)}
+      />
     </section>
   )
 }

@@ -76,6 +76,16 @@ export type ChatCitation = {
   title: string
   filename: string
   chunkIndex?: number
+  content?: string
+}
+
+export type CitationSource = {
+  documentId: string
+  title: string
+  filename: string
+  chunkIndex: number
+  excerpt: string
+  documentContent: string
 }
 
 export type ChatConversation = {
