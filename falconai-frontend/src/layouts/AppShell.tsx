@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FalconMark } from '../components/FalconMark'
 import { NavIcon } from '../components/NavIcon'
@@ -6,6 +6,7 @@ import { NAV_ITEMS } from '../lib/nav'
 import { usePermissions } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
 import { useConversationsStore } from '../store/conversationsStore'
+import GuidedTour from '../tour/GuidedTour'
 import './AppShell.css'
 
 const COLLAPSE_KEY = 'falconai_sidebar_collapsed'
@@ -28,6 +29,7 @@ export default function AppShell() {
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [signingOut, setSigningOut] = useState(false)
   const [chatOpen, setChatOpen] = useState(true)
+  const startTourRef = useRef<(() => void) | null>(null)
 
   const conversations = useConversationsStore((s) => s.conversations)
   const loadConversations = useConversationsStore((s) => s.load)
@@ -85,6 +87,12 @@ export default function AppShell() {
     }
   }
 
+  const prepareShellForTour = useCallback(() => {
+    setCollapsed(false)
+    setSidebarOpen(true)
+    setChatOpen(true)
+  }, [])
+
   const initials =
     user?.fullName
       ?.split(/\s+/)
@@ -111,7 +119,7 @@ export default function AppShell() {
 
       <aside className="app-sidebar" aria-label="Sidebar">
         <div className="app-sidebar-head">
-          <div className="app-sidebar-brand">
+          <div className="app-sidebar-brand" data-tour="brand">
             <FalconMark className="app-sidebar-mark" />
             <div className="app-sidebar-brand-text">
               <p className="app-sidebar-name">FalconAI</p>
@@ -136,6 +144,7 @@ export default function AppShell() {
                 type="button"
                 className={`app-nav-link app-nav-parent${isChat ? ' app-nav-link--active' : ''}`}
                 title="Chat"
+                data-tour="nav-chat"
                 onClick={() => {
                   if (collapsed) {
                     setCollapsed(false)
@@ -153,7 +162,7 @@ export default function AppShell() {
               </button>
 
               {chatOpen ? (
-                <div className="app-nav-sub">
+                <div className="app-nav-sub" data-tour="nav-conversations">
                   <button
                     type="button"
                     className="app-nav-sublink app-nav-sublink--new"
@@ -202,6 +211,7 @@ export default function AppShell() {
               to={item.path}
               end={item.path === '/'}
               title={item.label}
+              data-tour={item.feature ? `nav-${item.feature}` : undefined}
               className={({ isActive }) =>
                 `app-nav-link${isActive ? ' app-nav-link--active' : ''}`
               }
@@ -214,6 +224,17 @@ export default function AppShell() {
         </nav>
 
         <div className="app-sidebar-footer">
+          <button
+            type="button"
+            className="app-tour-btn"
+            data-tour="tour-button"
+            title="Start guided tour"
+            aria-label="Start guided tour"
+            onClick={() => startTourRef.current?.()}
+          >
+            <NavIcon name="tour" className="app-nav-icon" />
+            <span className="app-nav-label">Tour</span>
+          </button>
           <div className="app-user" title={user?.fullName || 'User'}>
             <div className="app-user-avatar" aria-hidden>
               {initials}
@@ -258,6 +279,8 @@ export default function AppShell() {
           <Outlet />
         </div>
       </div>
+
+      <GuidedTour prepareShell={prepareShellForTour} startRef={startTourRef} />
     </div>
   )
 }

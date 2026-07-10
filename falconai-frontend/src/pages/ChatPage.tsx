@@ -245,7 +245,7 @@ export default function ChatPage() {
         </p>
       ) : null}
 
-      <div className="chat-scroll sleek-scroll" aria-live="polite">
+      <div className="chat-scroll sleek-scroll" aria-live="polite" data-tour="chat-area">
         <div className="chat-column">
           {loadingHistory ? (
             <p className="chat-loading">Loading conversation…</p>
@@ -331,7 +331,7 @@ export default function ChatPage() {
       </div>
 
       <div className="chat-footer">
-        <form className="chat-composer" onSubmit={handleSubmit}>
+        <form className="chat-composer" data-tour="chat-composer" onSubmit={handleSubmit}>
           <label className="sr-only" htmlFor="chat-input">
             Message
           </label>
@@ -363,7 +363,9 @@ export default function ChatPage() {
             {sending ? '…' : '↑'}
           </button>
         </form>
-        <p className="chat-disclaimer">Answers are grounded in your knowledge base.</p>
+        <p className="chat-disclaimer" data-tour="chat-disclaimer">
+          Answers are grounded in your knowledge base.
+        </p>
       </div>
 
       <CitationSourceModal

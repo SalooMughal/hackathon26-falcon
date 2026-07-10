@@ -15,6 +15,7 @@ export type NavIconId =
   | 'expand'
   | 'signout'
   | 'menu'
+  | 'tour'
 
 type IconProps = {
   name: NavIconId
@@ -131,6 +132,16 @@ const icons: Record<NavIconId, ReactNode> = {
       <path d="M4 7h16" />
       <path d="M4 12h16" />
       <path d="M4 17h16" />
+    </>
+  ),
+  tour: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+      <path d="M12 3.5v2.2" />
+      <path d="M12 18.3v2.2" />
+      <path d="M3.5 12h2.2" />
+      <path d="M18.3 12h2.2" />
     </>
   ),
 }

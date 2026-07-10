@@ -201,7 +201,7 @@ export default function KnowledgeBasePage() {
   const totalPages = Math.max(1, Math.ceil(total / limit))
 
   return (
-    <section className="dash-page">
+    <section className="dash-page" data-tour="kb-page">
       <header className="dash-header">
         <div>
           <h1>Knowledge base</h1>

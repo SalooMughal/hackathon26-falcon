@@ -339,6 +339,7 @@
 }
 
 .app-signout,
+.app-tour-btn,
 .app-menu-btn {
   display: flex;
   align-items: center;
@@ -357,6 +358,7 @@
 }
 
 .app-signout:hover:not(:disabled),
+.app-tour-btn:hover,
 .app-menu-btn:hover {
   background: rgba(20, 53, 47, 0.05);
 }
@@ -399,7 +401,8 @@
 }
 
 .app-shell--collapsed .app-nav-link,
-.app-shell--collapsed .app-signout {
+.app-shell--collapsed .app-signout,
+.app-shell--collapsed .app-tour-btn {
   justify-content: center;
   padding-left: 0.55rem;
   padding-right: 0.55rem;
@@ -517,7 +520,8 @@
   }
 
   .app-shell--collapsed .app-nav-link,
-  .app-shell--collapsed .app-signout {
+  .app-shell--collapsed .app-signout,
+  .app-shell--collapsed .app-tour-btn {
     justify-content: flex-start;
     padding: 0.7rem 0.75rem;
   }
