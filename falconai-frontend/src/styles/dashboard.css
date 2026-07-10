@@ -1,0 +1,374 @@
+.dash-page {
+  --ink: #14352f;
+  --ink-soft: #2a524a;
+  --line: rgba(20, 53, 47, 0.12);
+  --panel: rgba(255, 252, 247, 0.88);
+  --danger: #9b2c2c;
+  --ok: #1f5c45;
+  --display: 'Fraunces', Georgia, serif;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.dash-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dash-header h1 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  font-weight: 560;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.dash-header p {
+  margin: 0.4rem 0 0;
+  color: var(--ink-soft);
+  max-width: 48ch;
+  line-height: 1.45;
+}
+
+.dash-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 1.15rem;
+  backdrop-filter: blur(10px);
+}
+
+.dash-muted {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.dash-muted code {
+  font-size: 0.9em;
+}
+
+.dash-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dash-btn {
+  border: 1px solid var(--line);
+  background: #14352f;
+  color: #f7f3ea;
+  font: inherit;
+  font-weight: 650;
+  font-size: 0.9rem;
+  padding: 0.65rem 0.95rem;
+  cursor: pointer;
+}
+
+.dash-btn:hover:not(:disabled) {
+  background: #0f2924;
+}
+
+.dash-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.dash-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+}
+
+.dash-btn--ghost:hover:not(:disabled) {
+  background: rgba(20, 53, 47, 0.05);
+}
+
+.dash-btn--danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: rgba(155, 44, 44, 0.35);
+}
+
+.dash-btn--danger:hover:not(:disabled) {
+  background: rgba(155, 44, 44, 0.08);
+}
+
+.dash-btn--sm {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.dash-alert {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.9rem;
+  border: 1px solid transparent;
+}
+
+.dash-alert--error {
+  color: var(--danger);
+  background: rgba(155, 44, 44, 0.08);
+  border-color: rgba(155, 44, 44, 0.18);
+}
+
+.dash-alert--info {
+  color: var(--ok);
+  background: rgba(31, 92, 69, 0.08);
+  border-color: rgba(31, 92, 69, 0.16);
+}
+
+.dash-table-wrap {
+  overflow-x: auto;
+}
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.dash-table th,
+.dash-table td {
+  text-align: left;
+  padding: 0.75rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.dash-table th {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  font-weight: 700;
+}
+
+.dash-table td {
+  color: var(--ink);
+}
+
+.dash-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+}
+
+.dash-badge--on {
+  color: var(--ok);
+  border-color: rgba(31, 92, 69, 0.3);
+  background: rgba(31, 92, 69, 0.08);
+}
+
+.dash-badge--off {
+  color: var(--danger);
+  border-color: rgba(155, 44, 44, 0.25);
+  background: rgba(155, 44, 44, 0.06);
+}
+
+.dash-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.dash-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.dash-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dash-field span {
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+
+.dash-field input,
+.dash-field textarea,
+.dash-field select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font: inherit;
+  padding: 0.7rem 0.8rem;
+  outline: none;
+}
+
+.dash-field textarea {
+  min-height: 88px;
+  resize: vertical;
+}
+
+.dash-field input:focus,
+.dash-field textarea:focus,
+.dash-field select:focus {
+  border-color: rgba(20, 53, 47, 0.45);
+  box-shadow: 0 0 0 3px rgba(20, 53, 47, 0.08);
+}
+
+.dash-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.dash-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 53, 47, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.dash-modal {
+  width: min(480px, 100%);
+  background: #fffcf7;
+  border: 1px solid var(--line);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.dash-modal h2 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 560;
+}
+
+.dash-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.chat-placeholder {
+  min-height: 280px;
+  display: grid;
+  align-content: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.chat-placeholder-title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  font-weight: 560;
+}
+
+.chat-placeholder-copy {
+  margin: 0 auto;
+  max-width: 42ch;
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.role-feature-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.role-feature-card:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.role-feature-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.role-feature-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.role-feature-head p {
+  margin: 0.25rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.perm-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.perm-chip {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 650;
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+  text-transform: capitalize;
+}
+
+.perm-chip--on {
+  color: var(--ok);
+  border-color: rgba(31, 92, 69, 0.35);
+  background: rgba(31, 92, 69, 0.08);
+}
+
+.perm-chip:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.feature-picker {
+  display: grid;
+  gap: 0.45rem;
+  max-height: 220px;
+  overflow: auto;
+  padding: 0.35rem 0;
+}
+
+.feature-picker label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  color: var(--ink-soft);
+  font-weight: 650;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}

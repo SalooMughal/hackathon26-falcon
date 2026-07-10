@@ -1,14 +1,8 @@
 import { z } from "zod";
 
 export const getAllFeaturesSchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 10)),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().optional().default(10),
 });
 
 export const getOneFeatureSchema = z.object({

@@ -1,14 +1,8 @@
 import { z } from "zod";
 
 export const getAllRolesSchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 10)),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().optional().default(10),
 });
 
 export const getOneRoleSchema = z.object({
@@ -47,14 +41,8 @@ export const removePermissionsFromFeatureRoleSchema = z.object({
 });
 
 export const getAllPermissionsSchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 1)),
-  limit: z
-    .string()
-    .optional()
-    .transform((val) => (val ? parseInt(val) : 10)),
+  page: z.coerce.number().int().positive().optional().default(1),
+  limit: z.coerce.number().int().positive().optional().default(10),
 });
 
 export type IGetAllRolesInput = z.infer<typeof getAllRolesSchema>;

@@ -5,18 +5,63 @@ export type AuthTokens = {
   refresh_token: string
 }
 
+export type AuthPermission = {
+  id: string
+  name: string
+  description?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type AuthFeature = {
+  id: string
+  name: string
+  description?: string
+  isActive: boolean
+  createdAt?: string
+  updatedAt?: string
+}
+
+export type RoleFeaturePermission = {
+  id: string
+  roleFeatureId: string
+  permissionId: string
+  permission: AuthPermission
+}
+
+export type RoleFeature = {
+  id: string
+  roleId: string
+  featureId: string
+  feature: AuthFeature
+  roleFeaturePermissions: RoleFeaturePermission[]
+}
+
+export type AuthRole = {
+  id: string
+  name: string
+  description?: string
+  createdAt?: string
+  updatedAt?: string
+  roleFeatures?: RoleFeature[]
+}
+
 export type AuthUser = {
   id: string
   email: string
   fullName?: string | null
   avatarUrl?: string | null
   emailVerified?: boolean
-  role?: {
-    id: string
-    name: string
-    description?: string
-  }
-  [key: string]: unknown
+  phoneVerified?: boolean
+  phone?: string | null
+  dateOfBirth?: string | null
+  gender?: string | null
+  country?: string | null
+  status?: string | null
+  profileComplete?: boolean
+  createdAt?: string
+  updatedAt?: string
+  role?: AuthRole
 }
 
 type SigninSuccess = {

@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
 import {
   forgotPasswordChange,
   forgotPasswordSend,
@@ -7,33 +8,18 @@ import {
   signin,
   verifyUser,
 } from '../api/auth'
+import { FalconMark } from '../components/FalconMark'
 import { useAuthStore } from '../store/authStore'
 import './LoginPage.css'
 
-type View = 'signin' | 'verify-otp' | 'forgot-send' | 'forgot-verify' | 'forgot-change' | 'signed-in'
-
-function FalconMark() {
-  return (
-    <svg className="falcon-mark" viewBox="0 0 48 48" aria-hidden="true">
-      <path
-        d="M8 30c6-2 11-8 14-16 1 6 4 11 10 14-5 1-9 4-11 9-2-5-7-8-13-7z"
-        fill="currentColor"
-      />
-      <path
-        d="M24 14c3-5 8-8 14-9-4 4-6 9-6 15-3-2-6-4-8-6z"
-        fill="currentColor"
-        opacity="0.55"
-      />
-    </svg>
-  )
-}
+type View = 'signin' | 'verify-otp' | 'forgot-send' | 'forgot-verify' | 'forgot-change'
 
 export default function LoginPage() {
-  const user = useAuthStore((s) => s.user)
+  const accessToken = useAuthStore((s) => s.accessToken)
   const setSession = useAuthStore((s) => s.setSession)
-  const signOut = useAuthStore((s) => s.signOut)
+  const navigate = useNavigate()
 
-  const [view, setView] = useState<View>(user ? 'signed-in' : 'signin')
+  const [view, setView] = useState<View>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -48,14 +34,14 @@ export default function LoginPage() {
   const [resendCooldown, setResendCooldown] = useState(0)
 
   useEffect(() => {
-    if (user) setView('signed-in')
-  }, [user])
-
-  useEffect(() => {
     if (resendCooldown <= 0) return
     const timer = window.setTimeout(() => setResendCooldown((s) => s - 1), 1000)
     return () => window.clearTimeout(timer)
   }, [resendCooldown])
+
+  if (accessToken) {
+    return <Navigate to="/" replace />
+  }
 
   function resetMessages() {
     setError('')
@@ -91,7 +77,7 @@ export default function LoginPage() {
 
     if ('tokens' in result.data && 'user' in result.data) {
       setSession(result.data.tokens, result.data.user)
-      setView('signed-in')
+      navigate('/', { replace: true })
     }
   }
 
@@ -115,7 +101,7 @@ export default function LoginPage() {
     }
 
     setSession(result.data.tokens, result.data.user)
-    setView('signed-in')
+    navigate('/', { replace: true })
   }
 
   async function handleResendOtp() {
@@ -207,15 +193,6 @@ export default function LoginPage() {
     setView('signin')
   }
 
-  async function handleSignOut() {
-    setLoading(true)
-    await signOut()
-    setLoading(false)
-    setPassword('')
-    setOtp('')
-    goTo('signin')
-  }
-
   const titles: Record<View, { heading: string; sub: string }> = {
     signin: {
       heading: 'Welcome back',
@@ -237,10 +214,6 @@ export default function LoginPage() {
       heading: 'Choose a new password',
       sub: 'Pick something secure — at least 6 characters.',
     },
-    'signed-in': {
-      heading: user?.fullName ? `Hello, ${user.fullName.split(' ')[0]}` : 'You’re in',
-      sub: 'Signed in successfully. The rest of the app comes next.',
-    },
   }
 
   const { heading, sub } = titles[view]
@@ -257,7 +230,7 @@ export default function LoginPage() {
       <main className="login-main">
         <header className="login-brand">
           <div className="login-brand-mark">
-            <FalconMark />
+            <FalconMark className="falcon-mark" />
           </div>
           <p className="login-brand-name">FalconAI</p>
           <p className="login-brand-tagline">Your pathway to owning a home</p>
@@ -468,31 +441,6 @@ export default function LoginPage() {
                 {loading ? 'Saving…' : 'Update password'}
               </button>
             </form>
-          )}
-
-          {view === 'signed-in' && (
-            <div className="login-success">
-              <dl className="login-user-meta">
-                <div>
-                  <dt>Email</dt>
-                  <dd>{user?.email}</dd>
-                </div>
-                {user?.role?.name ? (
-                  <div>
-                    <dt>Role</dt>
-                    <dd>{user.role.name}</dd>
-                  </div>
-                ) : null}
-              </dl>
-              <button
-                type="button"
-                className="login-submit login-submit--ghost"
-                onClick={handleSignOut}
-                disabled={loading}
-              >
-                {loading ? 'Signing out…' : 'Sign out'}
-              </button>
-            </div>
           )}
         </section>
       </main>
