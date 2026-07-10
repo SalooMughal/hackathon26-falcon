@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { FalconMark } from '../components/FalconMark'
 import { NavIcon } from '../components/NavIcon'
 import { NAV_ITEMS } from '../lib/nav'
 import { usePermissions } from '../lib/permissions'
 import { useAuthStore } from '../store/authStore'
+import { useConversationsStore } from '../store/conversationsStore'
 import './AppShell.css'
 
 const COLLAPSE_KEY = 'falconai_sidebar_collapsed'
@@ -22,14 +23,22 @@ export default function AppShell() {
   const signOut = useAuthStore((s) => s.signOut)
   const navigate = useNavigate()
   const location = useLocation()
-  const isChat = location.pathname === '/'
+  const isChat = location.pathname === '/' || location.pathname.startsWith('/c/')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [signingOut, setSigningOut] = useState(false)
+  const [chatOpen, setChatOpen] = useState(true)
+
+  const conversations = useConversationsStore((s) => s.conversations)
+  const loadConversations = useConversationsStore((s) => s.load)
+  const createConversation = useConversationsStore((s) => s.create)
+  const removeConversation = useConversationsStore((s) => s.remove)
 
   const visibleNav = NAV_ITEMS.filter(
     (item) => item.always || (item.feature && can(item.feature, 'read')),
   )
+  const chatItem = visibleNav.find((item) => item.path === '/' || item.label === 'Chat')
+  const otherNav = visibleNav.filter((item) => item !== chatItem)
 
   useEffect(() => {
     try {
@@ -39,11 +48,41 @@ export default function AppShell() {
     }
   }, [collapsed])
 
+  useEffect(() => {
+    if (can('chat', 'read') || chatItem?.always) {
+      void loadConversations()
+    }
+  }, [can, chatItem?.always, loadConversations])
+
+  useEffect(() => {
+    if (isChat) setChatOpen(true)
+  }, [isChat])
+
   async function handleSignOut() {
     setSigningOut(true)
     await signOut()
     setSigningOut(false)
     navigate('/login', { replace: true })
+  }
+
+  async function handleNewChat() {
+    const conversation = await createConversation()
+    if (!conversation) return
+    setSidebarOpen(false)
+    navigate(`/c/${conversation.id}`)
+  }
+
+  async function handleDeleteConversation(id: string, e: MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!window.confirm('Delete this conversation?')) return
+    const ok = await removeConversation(id)
+    if (!ok) return
+    if (location.pathname === `/c/${id}`) {
+      const remaining = useConversationsStore.getState().conversations
+      if (remaining[0]) navigate(`/c/${remaining[0].id}`)
+      else void handleNewChat()
+    }
   }
 
   const initials =
@@ -91,7 +130,73 @@ export default function AppShell() {
         </div>
 
         <nav className="app-sidebar-nav" aria-label="Main">
-          {visibleNav.map((item) => (
+          {chatItem ? (
+            <div className={`app-nav-group${chatOpen ? ' app-nav-group--open' : ''}`}>
+              <button
+                type="button"
+                className={`app-nav-link app-nav-parent${isChat ? ' app-nav-link--active' : ''}`}
+                title="Chat"
+                onClick={() => {
+                  if (collapsed) {
+                    setCollapsed(false)
+                    setChatOpen(true)
+                    return
+                  }
+                  setChatOpen((v) => !v)
+                }}
+              >
+                <NavIcon name={chatItem.icon} className="app-nav-icon" />
+                <span className="app-nav-label">{chatItem.label}</span>
+                <span className="app-nav-caret" aria-hidden>
+                  {chatOpen ? '▾' : '▸'}
+                </span>
+              </button>
+
+              {chatOpen ? (
+                <div className="app-nav-sub">
+                  <button
+                    type="button"
+                    className="app-nav-sublink app-nav-sublink--new"
+                    onClick={() => void handleNewChat()}
+                  >
+                    <span className="app-nav-sub-plus">+</span>
+                    <span>New chat</span>
+                  </button>
+
+                  {conversations.length === 0 ? (
+                    <p className="app-nav-empty">No conversations yet</p>
+                  ) : (
+                    conversations.map((conversation) => (
+                      <NavLink
+                        key={conversation.id}
+                        to={`/c/${conversation.id}`}
+                        title={conversation.title}
+                        className={({ isActive }) =>
+                          `app-nav-sublink${isActive ? ' app-nav-sublink--active' : ''}`
+                        }
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <span className="app-nav-sub-title">{conversation.title}</span>
+                        {can('chat', 'delete') ? (
+                          <button
+                            type="button"
+                            className="app-nav-sub-delete"
+                            aria-label={`Delete ${conversation.title}`}
+                            title="Delete"
+                            onClick={(e) => void handleDeleteConversation(conversation.id, e)}
+                          >
+                            ×
+                          </button>
+                        ) : null}
+                      </NavLink>
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {otherNav.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}

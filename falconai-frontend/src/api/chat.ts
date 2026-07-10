@@ -1,9 +1,22 @@
 import { apiRequest } from './client'
-import type { ChatCitation, ChatMessage } from './types'
+import type { ChatCitation, ChatConversation, ChatMessage } from './types'
+
+type ConversationsResponse = {
+  code: number
+  message: string
+  conversations: ChatConversation[]
+}
+
+type ConversationResponse = {
+  code: number
+  message: string
+  conversation: ChatConversation
+}
 
 type HistoryResponse = {
   code: number
   message: string
+  conversation: ChatConversation
   messages: ChatMessage[]
 }
 
@@ -21,22 +34,48 @@ export type StreamEvent =
       citations: ChatCitation[]
       grounded: boolean
       provider: string | null
+      conversationId: string
+      conversationTitle?: string
     }
   | { type: 'error'; message: string; code?: number }
 
-export async function getChatHistory(limit = 50) {
-  return apiRequest<HistoryResponse>({
+export async function listConversations(limit = 50) {
+  return apiRequest<ConversationsResponse>({
     method: 'GET',
-    url: '/v1/chat/read/history',
+    url: '/v1/chat/read/conversations',
     params: { limit },
   })
 }
 
-export async function clearChatHistory() {
+export async function createConversation(title?: string) {
+  return apiRequest<ConversationResponse>({
+    method: 'POST',
+    url: '/v1/chat/create/conversation',
+    data: title ? { title } : {},
+  })
+}
+
+export async function updateConversation(conversationId: string, title: string) {
+  return apiRequest<ConversationResponse>({
+    method: 'POST',
+    url: '/v1/chat/update/conversation',
+    data: { conversationId, title },
+  })
+}
+
+export async function deleteConversation(conversationId: string) {
   return apiRequest<MessageResponse>({
     method: 'POST',
-    url: '/v1/chat/delete/history',
-    data: {},
+    url: '/v1/chat/delete/conversation',
+    data: { conversationId },
+  })
+}
+
+export async function getChatHistory(conversationId: string, limit = 100) {
+  return apiRequest<HistoryResponse>({
+    method: 'GET',
+    url: '/v1/chat/read/history',
+    params: { conversationId, limit },
   })
 }
 
@@ -44,6 +83,7 @@ export async function clearChatHistory() {
  * Streams an assistant answer via SSE from POST /v1/chat/create/ask-stream.
  */
 export async function askChatStream(
+  conversationId: string,
   question: string,
   onEvent: (event: StreamEvent) => void,
   signal?: AbortSignal,
@@ -58,7 +98,7 @@ export async function askChatStream(
       Accept: 'text/event-stream',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ conversationId, question }),
     signal,
   })
 

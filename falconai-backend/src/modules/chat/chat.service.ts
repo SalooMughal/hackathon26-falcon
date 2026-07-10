@@ -1,13 +1,13 @@
 import { db } from "@app/config/db";
 import statusCodes from "@app/constants/statusCodes";
 import { getPlatformSetting } from "@app/modules/platform-settings/platform-settings.service";
-import { chatMessages, knowledgeChunks } from "@app/schema/tables";
+import { chatConversations, chatMessages, knowledgeChunks } from "@app/schema/tables";
 import { INewChatMessage } from "@app/schema/types";
 import { embeddingsService } from "@app/services/ai/embeddings";
 import { llmService, type RagContext } from "@app/services/ai/llm";
 import logger from "@app/services/logging/logger";
 import { pineconeService } from "@app/services/pinecone/client";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 
 const REFUSAL_MESSAGE =
   "I don't have enough information in the knowledge base to answer that. Try asking about project setup, team norms, architecture, or onboarding.";
@@ -21,8 +21,35 @@ export type ChatStreamEvent =
       citations: Array<{ documentId: string; title: string; filename: string; chunkIndex?: number }>;
       grounded: boolean;
       provider: string | null;
+      conversationId: string;
+      conversationTitle?: string;
     }
   | { type: "error"; message: string; code?: number };
+
+function titleFromQuestion(question: string) {
+  const cleaned = question.replace(/\s+/g, " ").trim();
+  if (cleaned.length <= 48) return cleaned;
+  return `${cleaned.slice(0, 45).trimEnd()}…`;
+}
+
+async function getOwnedConversation(userId: string, conversationId: string) {
+  const [conversation] = await db
+    .select()
+    .from(chatConversations)
+    .where(and(eq(chatConversations.id, conversationId), eq(chatConversations.userId, userId)))
+    .limit(1);
+  return conversation || null;
+}
+
+async function touchConversation(conversationId: string, title?: string) {
+  await db
+    .update(chatConversations)
+    .set({
+      ...(title ? { title } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(chatConversations.id, conversationId));
+}
 
 async function getRagConfig() {
   const topKRaw = await getPlatformSetting("ai.rag_top_k");
@@ -81,9 +108,78 @@ async function retrieveContexts(question: string) {
   return { contexts, refused: false as const };
 }
 
-const ask = async (userId: string, question: string) => {
+const listConversations = async (userId: string, limit = 50) => {
   try {
+    const conversations = await db
+      .select()
+      .from(chatConversations)
+      .where(eq(chatConversations.userId, userId))
+      .orderBy(desc(chatConversations.updatedAt))
+      .limit(limit);
+    return { conversations };
+  } catch (error) {
+    logger.error(`Error in listConversations: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
+const createConversation = async (userId: string, title?: string) => {
+  try {
+    const [conversation] = await db
+      .insert(chatConversations)
+      .values({
+        userId,
+        title: title?.trim() || "New chat",
+      })
+      .returning();
+    return { conversation };
+  } catch (error) {
+    logger.error(`Error in createConversation: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
+const updateConversation = async (userId: string, conversationId: string, title: string) => {
+  try {
+    const existing = await getOwnedConversation(userId, conversationId);
+    if (!existing) return { error: statusCodes.ConversationNotFound };
+
+    const [conversation] = await db
+      .update(chatConversations)
+      .set({ title: title.trim(), updatedAt: new Date() })
+      .where(eq(chatConversations.id, conversationId))
+      .returning();
+
+    return { conversation };
+  } catch (error) {
+    logger.error(`Error in updateConversation: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
+const deleteConversation = async (userId: string, conversationId: string) => {
+  try {
+    const existing = await getOwnedConversation(userId, conversationId);
+    if (!existing) return { error: statusCodes.ConversationNotFound };
+
+    await db.delete(chatConversations).where(eq(chatConversations.id, conversationId));
+    return {};
+  } catch (error) {
+    logger.error(`Error in deleteConversation: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
+const ask = async (userId: string, conversationId: string, question: string) => {
+  try {
+    const conversation = await getOwnedConversation(userId, conversationId);
+    if (!conversation) return { error: statusCodes.ConversationNotFound };
+
+    const shouldRename = conversation.title === "New chat";
+    const nextTitle = shouldRename ? titleFromQuestion(question) : undefined;
+
     const userMessage: INewChatMessage = {
+      conversationId,
       userId,
       role: "user",
       content: question,
@@ -96,12 +192,14 @@ const ask = async (userId: string, question: string) => {
 
     if (retrieved.refused || !retrieved.contexts.length) {
       const assistantMessage: INewChatMessage = {
+        conversationId,
         userId,
         role: "assistant",
         content: REFUSAL_MESSAGE,
         citations: [],
       };
       const [saved] = await db.insert(chatMessages).values(assistantMessage).returning();
+      await touchConversation(conversationId, nextTitle);
 
       return {
         answer: REFUSAL_MESSAGE,
@@ -109,6 +207,8 @@ const ask = async (userId: string, question: string) => {
         grounded: false,
         provider: null,
         message: saved,
+        conversationId,
+        conversationTitle: nextTitle || conversation.title,
       };
     }
 
@@ -119,12 +219,14 @@ const ask = async (userId: string, question: string) => {
     const answer = result.grounded ? result.answer : result.answer || REFUSAL_MESSAGE;
 
     const assistantMessage: INewChatMessage = {
+      conversationId,
       userId,
       role: "assistant",
       content: answer,
       citations,
     };
     const [saved] = await db.insert(chatMessages).values(assistantMessage).returning();
+    await touchConversation(conversationId, nextTitle);
 
     return {
       answer,
@@ -132,6 +234,8 @@ const ask = async (userId: string, question: string) => {
       grounded: result.grounded,
       provider: result.provider,
       message: saved,
+      conversationId,
+      conversationTitle: nextTitle || conversation.title,
     };
   } catch (error) {
     logger.error(`Error in chat ask: ${error instanceof Error ? error.message : String(error)}`);
@@ -139,11 +243,30 @@ const ask = async (userId: string, question: string) => {
   }
 };
 
-const askStream = async (userId: string, question: string, emit: (event: ChatStreamEvent) => void) => {
+const askStream = async (
+  userId: string,
+  conversationId: string,
+  question: string,
+  emit: (event: ChatStreamEvent) => void,
+) => {
   try {
+    const conversation = await getOwnedConversation(userId, conversationId);
+    if (!conversation) {
+      emit({
+        type: "error",
+        message: statusCodes.ConversationNotFound.message,
+        code: statusCodes.ConversationNotFound.code,
+      });
+      return { error: statusCodes.ConversationNotFound };
+    }
+
+    const shouldRename = conversation.title === "New chat";
+    const nextTitle = shouldRename ? titleFromQuestion(question) : undefined;
+
     emit({ type: "status", message: "Searching the knowledge base…" });
 
     const userMessage: INewChatMessage = {
+      conversationId,
       userId,
       role: "user",
       content: question,
@@ -164,18 +287,22 @@ const askStream = async (userId: string, question: string, emit: (event: ChatStr
     if (retrieved.refused || !retrieved.contexts.length) {
       emit({ type: "token", content: REFUSAL_MESSAGE });
       const assistantMessage: INewChatMessage = {
+        conversationId,
         userId,
         role: "assistant",
         content: REFUSAL_MESSAGE,
         citations: [],
       };
       await db.insert(chatMessages).values(assistantMessage);
+      await touchConversation(conversationId, nextTitle);
       emit({
         type: "done",
         answer: REFUSAL_MESSAGE,
         citations: [],
         grounded: false,
         provider: null,
+        conversationId,
+        conversationTitle: nextTitle || conversation.title,
       });
       return {};
     }
@@ -196,12 +323,14 @@ const askStream = async (userId: string, question: string, emit: (event: ChatStr
     const answer = result.answer || REFUSAL_MESSAGE;
 
     const assistantMessage: INewChatMessage = {
+      conversationId,
       userId,
       role: "assistant",
       content: answer,
       citations,
     };
     await db.insert(chatMessages).values(assistantMessage);
+    await touchConversation(conversationId, nextTitle);
 
     emit({
       type: "done",
@@ -209,6 +338,8 @@ const askStream = async (userId: string, question: string, emit: (event: ChatStr
       citations,
       grounded: result.grounded,
       provider: result.provider,
+      conversationId,
+      conversationTitle: nextTitle || conversation.title,
     });
 
     return {};
@@ -223,35 +354,31 @@ const askStream = async (userId: string, question: string, emit: (event: ChatStr
   }
 };
 
-const getHistory = async (userId: string, limit = 50) => {
+const getHistory = async (userId: string, conversationId: string, limit = 100) => {
   try {
+    const conversation = await getOwnedConversation(userId, conversationId);
+    if (!conversation) return { error: statusCodes.ConversationNotFound };
+
     const messages = await db
       .select()
       .from(chatMessages)
-      .where(eq(chatMessages.userId, userId))
+      .where(and(eq(chatMessages.conversationId, conversationId), eq(chatMessages.userId, userId)))
       .orderBy(desc(chatMessages.createdAt))
       .limit(limit);
 
-    return { messages: messages.reverse() };
+    return { conversation, messages: messages.reverse() };
   } catch (error) {
     logger.error(`Error in getHistory: ${error instanceof Error ? error.message : String(error)}`);
     return { error: statusCodes.InternalServerError };
   }
 };
 
-const clearHistory = async (userId: string) => {
-  try {
-    await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
-    return {};
-  } catch (error) {
-    logger.error(`Error in clearHistory: ${error instanceof Error ? error.message : String(error)}`);
-    return { error: statusCodes.InternalServerError };
-  }
-};
-
 export const chatService = {
+  listConversations,
+  createConversation,
+  updateConversation,
+  deleteConversation,
   ask,
   askStream,
   getHistory,
-  clearHistory,
 };

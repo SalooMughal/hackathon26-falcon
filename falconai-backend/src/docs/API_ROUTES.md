@@ -1023,16 +1023,39 @@ Admin-only module for uploading markdown documents that power the RAG chatbot.
 
 **Base Path:** `/v1/chat`
 
-Grounded RAG Q&A for any signed-in user with the `chat` feature.
+Named conversations with grounded RAG Q&A for any signed-in user with the `chat` feature.
+
+### GET /read/conversations
+
+**Description:** List the current user's conversations (newest activity first)
+**Authentication:** Required (`chat` read)
+
+### POST /create/conversation
+
+**Description:** Create a new empty conversation (`title` optional, defaults to `New chat`)
+**Authentication:** Required (`chat` create)
+
+### POST /update/conversation
+
+**Description:** Rename a conversation
+**Authentication:** Required (`chat` update)
+**Request Body:** `{ "conversationId": "uuid", "title": "string" }`
+
+### POST /delete/conversation
+
+**Description:** Delete a conversation and all of its messages
+**Authentication:** Required (`chat` delete)
+**Request Body:** `{ "conversationId": "uuid" }`
 
 ### POST /create/ask
 
-**Description:** Ask a question. Retrieves top chunks from Pinecone, refuses when similarity is below `ai.rag_min_score`, otherwise answers with the active LLM and citations.
+**Description:** Ask a question in a conversation. Retrieves top chunks from Pinecone, refuses when similarity is below `ai.rag_min_score`, otherwise answers with the active LLM and citations. Auto-titles the conversation from the first question when still named `New chat`.
 **Authentication:** Required (`chat` create)
 **Request Body:**
 
 ```json
 {
+  "conversationId": "uuid",
   "question": "string (required, 3-2000 chars)"
 }
 ```
@@ -1053,7 +1076,9 @@ Grounded RAG Q&A for any signed-in user with the `chat` feature.
     }
   ],
   "grounded": true,
-  "provider": "openai"
+  "provider": "openai",
+  "conversationId": "uuid",
+  "conversationTitle": "string"
 }
 ```
 
@@ -1071,7 +1096,7 @@ data: {"type":"status","message":"Searching the knowledge base…"}
 
 data: {"type":"token","content":"partial text"}
 
-data: {"type":"done","answer":"full text","citations":[...],"grounded":true,"provider":"openai"}
+data: {"type":"done","answer":"full text","citations":[...],"grounded":true,"provider":"openai","conversationId":"uuid","conversationTitle":"..."}
 
 data: [DONE]
 ```
@@ -1080,15 +1105,9 @@ Error events use `{"type":"error","message":"...","code":...}`.
 
 ### GET /read/history
 
-**Description:** Get the current user's recent chat messages
+**Description:** Get messages for one conversation owned by the current user
 **Authentication:** Required (`chat` read)
-**Query Parameters:** `limit` (optional, default 50)
-
-### POST /delete/history
-
-**Description:** Clear the current user's chat history
-**Authentication:** Required (`chat` delete)
-**Request Body:** `{}`
+**Query Parameters:** `conversationId` (required), `limit` (optional, default 100)
 
 ---
 

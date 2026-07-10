@@ -35,7 +35,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  padding: 1.1rem 0.75rem 1rem;
+  padding: 1.1rem 0rem 1rem;
   border-right: 1px solid var(--line);
   background: rgba(255, 252, 247, 0.72);
   backdrop-filter: blur(12px);
@@ -144,6 +144,11 @@
   transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
   min-width: 0;
   white-space: nowrap;
+  background: transparent;
+  width: 100%;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
 }
 
 .app-nav-link:hover {
@@ -155,6 +160,116 @@
   color: var(--ink);
   background: rgba(20, 53, 47, 0.08);
   border-color: var(--line);
+}
+
+.app-nav-group {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.app-nav-parent {
+  position: relative;
+}
+
+.app-nav-caret {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+.app-nav-sub {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.15rem 0 0.35rem 0.55rem;
+  margin-left: 0.85rem;
+  border-left: 1px solid var(--line);
+}
+
+.app-nav-sublink {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.app-nav-sublink:hover {
+  color: var(--ink);
+  background: rgba(20, 53, 47, 0.04);
+}
+
+.app-nav-sublink--active {
+  color: var(--ink);
+  background: rgba(20, 53, 47, 0.08);
+  border-color: var(--line);
+}
+
+.app-nav-sublink--new {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.app-nav-sub-plus {
+  display: inline-grid;
+  place-items: center;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.app-nav-sub-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-nav-sub-delete {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  padding: 0;
+}
+
+.app-nav-sublink:hover .app-nav-sub-delete,
+.app-nav-sublink--active .app-nav-sub-delete {
+  opacity: 1;
+}
+
+.app-nav-sub-delete:hover {
+  color: #9b2c2c;
+}
+
+.app-nav-empty {
+  margin: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.app-shell--collapsed .app-nav-caret {
+  display: none;
+}
+
+.app-shell--collapsed .app-nav-sub {
+  display: none;
 }
 
 .app-nav-label {
@@ -385,6 +500,14 @@
     overflow: visible;
     opacity: 1;
     pointer-events: auto;
+  }
+
+  .app-shell--collapsed .app-nav-caret {
+    display: inline;
+  }
+
+  .app-shell--collapsed .app-nav-sub {
+    display: grid;
   }
 
   .app-shell--collapsed .app-sidebar-head {

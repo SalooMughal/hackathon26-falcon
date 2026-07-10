@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
-import { askChatStream, clearChatHistory, getChatHistory } from '../api/chat'
+import { useNavigate, useParams } from 'react-router-dom'
+import { askChatStream, getChatHistory } from '../api/chat'
 import type { ChatCitation, ChatMessage } from '../api/types'
 import { usePermissions } from '../lib/permissions'
+import { useConversationsStore } from '../store/conversationsStore'
 import '../styles/dashboard.css'
 
 type UiMessage = {
@@ -24,11 +26,19 @@ function toUi(msg: ChatMessage): UiMessage {
 }
 
 export default function ChatPage() {
+  const { conversationId } = useParams<{ conversationId: string }>()
+  const navigate = useNavigate()
   const { can } = usePermissions()
   const canAsk = can('chat', 'create')
-  const canClear = can('chat', 'delete')
+  const canDelete = can('chat', 'delete')
+
+  const conversations = useConversationsStore((s) => s.conversations)
+  const createConversation = useConversationsStore((s) => s.create)
+  const removeConversation = useConversationsStore((s) => s.remove)
+  const patchTitle = useConversationsStore((s) => s.patchTitle)
 
   const [messages, setMessages] = useState<UiMessage[]>([])
+  const [title, setTitle] = useState('New chat')
   const [input, setInput] = useState('')
   const [loadingHistory, setLoadingHistory] = useState(true)
   const [sending, setSending] = useState(false)
@@ -38,24 +48,38 @@ export default function ChatPage() {
   const abortRef = useRef<AbortController | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const loadHistory = useCallback(async () => {
+  const loadHistory = useCallback(async (id: string) => {
     setLoadingHistory(true)
     setError('')
-    const result = await getChatHistory(80)
+    const result = await getChatHistory(id, 100)
     setLoadingHistory(false)
     if (!result.ok) {
       setError(result.error.message)
+      setMessages([])
       return
     }
+    setTitle(result.data.conversation.title)
     setMessages(result.data.messages.map(toUi))
   }, [])
 
   useEffect(() => {
-    void loadHistory()
+    abortRef.current?.abort()
+    setInput('')
+    setStatus('')
+    setSending(false)
+
+    if (!conversationId) {
+      setLoadingHistory(false)
+      setMessages([])
+      setTitle('New chat')
+      return
+    }
+
+    void loadHistory(conversationId)
     return () => {
       abortRef.current?.abort()
     }
-  }, [loadHistory])
+  }, [conversationId, loadHistory])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -68,34 +92,38 @@ export default function ChatPage() {
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`
   }, [input])
 
-  async function handleClear() {
-    if (!canClear) return
-    if (!window.confirm('Clear your entire chat history?')) return
-    setError('')
-    const result = await clearChatHistory()
-    if (!result.ok) {
-      setError(result.error.message)
-      return
-    }
-    setMessages([])
+  async function handleNewChat() {
+    const conversation = await createConversation()
+    if (!conversation) return
+    navigate(`/c/${conversation.id}`)
+  }
+
+  async function handleDelete() {
+    if (!conversationId || !canDelete) return
+    if (!window.confirm('Delete this conversation?')) return
+    const ok = await removeConversation(conversationId)
+    if (!ok) return
+    const next = conversations.find((c) => c.id !== conversationId)
+    if (next) navigate(`/c/${next.id}`)
+    else void handleNewChat()
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const question = input.trim()
-    if (!question || sending || !canAsk) return
+    if (!question || sending || !canAsk || !conversationId) return
 
     setInput('')
     setError('')
     setStatus('')
     setSending(true)
 
-    const userId = `local-user-${Date.now()}`
+    const userLocalId = `local-user-${Date.now()}`
     const assistantId = `local-assistant-${Date.now()}`
 
     setMessages((prev) => [
       ...prev,
-      { id: userId, role: 'user', content: question, citations: [] },
+      { id: userLocalId, role: 'user', content: question, citations: [] },
       {
         id: assistantId,
         role: 'assistant',
@@ -110,6 +138,7 @@ export default function ChatPage() {
 
     try {
       await askChatStream(
+        conversationId,
         question,
         (event) => {
           if (event.type === 'status') {
@@ -129,6 +158,10 @@ export default function ChatPage() {
           }
           if (event.type === 'done') {
             setStatus('')
+            if (event.conversationTitle) {
+              setTitle(event.conversationTitle)
+              patchTitle(conversationId, event.conversationTitle)
+            }
             setMessages((prev) =>
               prev.map((m) =>
                 m.id === assistantId
@@ -185,17 +218,22 @@ export default function ChatPage() {
     <section className="chat-screen">
       <header className="chat-top">
         <div className="chat-top-inner">
-          <h1>FalconAI</h1>
-          {canClear && messages.length > 0 ? (
-            <button
-              type="button"
-              className="chat-top-action"
-              onClick={() => void handleClear()}
-              disabled={sending}
-            >
-              Clear
+          <h1>{title}</h1>
+          <div className="chat-top-actions">
+            <button type="button" className="chat-top-action" onClick={() => void handleNewChat()}>
+              New chat
             </button>
-          ) : null}
+            {canDelete && conversationId && messages.length > 0 ? (
+              <button
+                type="button"
+                className="chat-top-action"
+                onClick={() => void handleDelete()}
+                disabled={sending}
+              >
+                Delete
+              </button>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -223,7 +261,7 @@ export default function ChatPage() {
                     key={suggestion}
                     type="button"
                     className="chat-suggestion"
-                    disabled={!canAsk || sending}
+                    disabled={!canAsk || sending || !conversationId}
                     onClick={() => {
                       setInput(suggestion)
                       textareaRef.current?.focus()
@@ -300,7 +338,7 @@ export default function ChatPage() {
                 : 'You do not have permission to send messages.'
             }
             rows={1}
-            disabled={!canAsk || sending}
+            disabled={!canAsk || sending || !conversationId}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -311,7 +349,7 @@ export default function ChatPage() {
           <button
             type="submit"
             className="chat-send"
-            disabled={!canAsk || sending || !input.trim()}
+            disabled={!canAsk || sending || !input.trim() || !conversationId}
             aria-label="Send message"
           >
             {sending ? '…' : '↑'}

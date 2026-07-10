@@ -11,6 +11,7 @@ import {
   users,
   knowledgeDocuments,
   knowledgeChunks,
+  chatConversations,
   chatMessages,
 } from "./tables";
 import { db } from "@app/config/db";
@@ -26,6 +27,7 @@ export type IPlatformSetting = InferSelectModel<typeof platformSettings>;
 export type INotification = InferSelectModel<typeof notifications>;
 export type IKnowledgeDocument = InferSelectModel<typeof knowledgeDocuments>;
 export type IKnowledgeChunk = InferSelectModel<typeof knowledgeChunks>;
+export type IChatConversation = InferSelectModel<typeof chatConversations>;
 export type IChatMessage = InferSelectModel<typeof chatMessages>;
 
 export type INewUser = InferInsertModel<typeof users>;
@@ -39,6 +41,7 @@ export type INewPlatformSetting = InferInsertModel<typeof platformSettings>;
 export type INewNotification = InferInsertModel<typeof notifications>;
 export type INewKnowledgeDocument = InferInsertModel<typeof knowledgeDocuments>;
 export type INewKnowledgeChunk = InferInsertModel<typeof knowledgeChunks>;
+export type INewChatConversation = InferInsertModel<typeof chatConversations>;
 export type INewChatMessage = InferInsertModel<typeof chatMessages>;
 
 const query = db.query.users.findFirst({

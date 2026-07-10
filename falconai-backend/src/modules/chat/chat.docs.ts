@@ -2,7 +2,59 @@
  * @swagger
  * tags:
  *   name: Chat
- *   description: Grounded RAG chatbot endpoints
+ *   description: Named conversations and grounded RAG chatbot endpoints
+ */
+
+/**
+ * @swagger
+ * /v1/chat/read/conversations:
+ *   get:
+ *     summary: List the current user's conversations
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conversations retrieved
+ */
+
+/**
+ * @swagger
+ * /v1/chat/create/conversation:
+ *   post:
+ *     summary: Create a new named conversation
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conversation created
+ */
+
+/**
+ * @swagger
+ * /v1/chat/update/conversation:
+ *   post:
+ *     summary: Rename a conversation
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conversation updated
+ */
+
+/**
+ * @swagger
+ * /v1/chat/delete/conversation:
+ *   post:
+ *     summary: Delete a conversation and its messages
+ *     tags: [Chat]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Conversation deleted
  */
 
 /**
@@ -19,8 +71,11 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [question]
+ *             required: [conversationId, question]
  *             properties:
+ *               conversationId:
+ *                 type: string
+ *                 format: uuid
  *               question:
  *                 type: string
  *                 example: How do I set up the backend locally?
@@ -43,11 +98,13 @@
  *         application/json:
  *           schema:
  *             type: object
- *             required: [question]
+ *             required: [conversationId, question]
  *             properties:
+ *               conversationId:
+ *                 type: string
+ *                 format: uuid
  *               question:
  *                 type: string
- *                 example: How do I set up the backend locally?
  *     responses:
  *       200:
  *         description: text/event-stream with status, token, done, and error events
@@ -57,30 +114,23 @@
  * @swagger
  * /v1/chat/read/history:
  *   get:
- *     summary: Get current user's chat history
+ *     summary: Get messages for a conversation
  *     tags: [Chat]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
+ *         name: conversationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 50
+ *           default: 100
  *     responses:
  *       200:
  *         description: History retrieved
- */
-
-/**
- * @swagger
- * /v1/chat/delete/history:
- *   post:
- *     summary: Clear current user's chat history
- *     tags: [Chat]
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: History cleared
  */

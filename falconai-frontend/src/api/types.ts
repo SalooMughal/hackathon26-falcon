@@ -78,8 +78,17 @@ export type ChatCitation = {
   chunkIndex?: number
 }
 
+export type ChatConversation = {
+  id: string
+  userId: string
+  title: string
+  createdAt: string
+  updatedAt: string
+}
+
 export type ChatMessage = {
   id: string
+  conversationId?: string
   userId: string
   role: 'user' | 'assistant'
   content: string

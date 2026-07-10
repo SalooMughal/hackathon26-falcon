@@ -35,6 +35,7 @@ const statusCodes = {
   InvalidUserRole: { statusCode: 400, code: 4025, message: "Invalid user role specified" },
   KnowledgeDocumentNotFound: { statusCode: 404, code: 4026, message: "Knowledge document not found" },
   KnowledgeDocumentExists: { statusCode: 409, code: 4027, message: "A knowledge document with this filename already exists" },
+  ConversationNotFound: { statusCode: 404, code: 4028, message: "Conversation not found" },
   AiNotConfigured: { statusCode: 503, code: 5031, message: "AI provider is not configured. Check platform settings." },
   PineconeNotConfigured: { statusCode: 503, code: 5032, message: "Pinecone is not configured. Check environment variables." },
   RagIndexingFailed: { statusCode: 500, code: 5002, message: "Failed to index document into the knowledge base" },

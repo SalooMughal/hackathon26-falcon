@@ -9,5 +9,6 @@ export * from "./platform-settings";
 export * from "./notifications";
 export * from "./user-preferences";
 export * from "./knowledge-base";
+export * from "./chat-conversations";
 export * from "./chat-messages";
 export * from "./enums";

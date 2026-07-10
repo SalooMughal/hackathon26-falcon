@@ -3,15 +3,90 @@ import logger from "@app/services/logging/logger";
 import { methods } from "@app/utils/methods";
 import { Request, Response } from "express";
 import { chatService } from "./chat.service";
-import { IAskChatInput, IGetChatHistoryInput } from "./validations";
+import {
+  IAskChatInput,
+  ICreateConversationInput,
+  IDeleteConversationInput,
+  IGetChatHistoryInput,
+  IListConversationsInput,
+  IUpdateConversationInput,
+} from "./validations";
 
-const ask = async (req: Request, res: Response) => {
+const listConversations = async (req: Request, res: Response) => {
   try {
-    const { question } = req.body as IAskChatInput;
+    const { limit } = req.query as unknown as IListConversationsInput;
     const userId = req.user?.id;
     if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
 
-    const { error, answer, citations, grounded, provider } = await chatService.ask(userId, question);
+    const { error, conversations } = await chatService.listConversations(userId, limit);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Conversations retrieved", { conversations });
+  } catch (error) {
+    logger.error("Error in listConversations controller:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
+const createConversation = async (req: Request, res: Response) => {
+  try {
+    const { title } = req.body as ICreateConversationInput;
+    const userId = req.user?.id;
+    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const { error, conversation } = await chatService.createConversation(userId, title);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Conversation created", { conversation });
+  } catch (error) {
+    logger.error("Error in createConversation controller:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
+const updateConversation = async (req: Request, res: Response) => {
+  try {
+    const { conversationId, title } = req.body as IUpdateConversationInput;
+    const userId = req.user?.id;
+    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const { error, conversation } = await chatService.updateConversation(userId, conversationId, title);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Conversation updated", { conversation });
+  } catch (error) {
+    logger.error("Error in updateConversation controller:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
+const deleteConversation = async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.body as IDeleteConversationInput;
+    const userId = req.user?.id;
+    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const { error } = await chatService.deleteConversation(userId, conversationId);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Conversation deleted");
+  } catch (error) {
+    logger.error("Error in deleteConversation controller:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
+const ask = async (req: Request, res: Response) => {
+  try {
+    const { conversationId, question } = req.body as IAskChatInput;
+    const userId = req.user?.id;
+    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const { error, answer, citations, grounded, provider, conversationTitle } = await chatService.ask(
+      userId,
+      conversationId,
+      question,
+    );
     if (error) return methods.sendResponse(res, error);
 
     methods.sendResponse(res, statusCodes.ReqSuccess, grounded ? "Answer generated" : "No grounded answer available", {
@@ -19,6 +94,8 @@ const ask = async (req: Request, res: Response) => {
       citations,
       grounded,
       provider,
+      conversationId,
+      conversationTitle,
     });
   } catch (error) {
     logger.error("Error in chat ask controller:", error);
@@ -28,7 +105,7 @@ const ask = async (req: Request, res: Response) => {
 
 const askStream = async (req: Request, res: Response) => {
   try {
-    const { question } = req.body as IAskChatInput;
+    const { conversationId, question } = req.body as IAskChatInput;
     const userId = req.user?.id;
     if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
 
@@ -49,7 +126,7 @@ const askStream = async (req: Request, res: Response) => {
       }
     });
 
-    await chatService.askStream(userId, question, writeEvent);
+    await chatService.askStream(userId, conversationId, question, writeEvent);
 
     if (!res.writableEnded) {
       res.write("data: [DONE]\n\n");
@@ -71,38 +148,26 @@ const askStream = async (req: Request, res: Response) => {
 
 const history = async (req: Request, res: Response) => {
   try {
-    const { limit } = req.query as unknown as IGetChatHistoryInput;
+    const { conversationId, limit } = req.query as unknown as IGetChatHistoryInput;
     const userId = req.user?.id;
     if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
 
-    const { error, messages } = await chatService.getHistory(userId, limit);
+    const { error, conversation, messages } = await chatService.getHistory(userId, conversationId, limit);
     if (error) return methods.sendResponse(res, error);
 
-    methods.sendResponse(res, statusCodes.ReqSuccess, "Chat history retrieved", { messages });
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Chat history retrieved", { conversation, messages });
   } catch (error) {
     logger.error("Error in chat history controller:", error);
     methods.sendResponse(res, statusCodes.InternalServerError);
   }
 };
 
-const clearHistory = async (req: Request, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    if (!userId) return methods.sendResponse(res, statusCodes.Unauthorized);
-
-    const { error } = await chatService.clearHistory(userId);
-    if (error) return methods.sendResponse(res, error);
-
-    methods.sendResponse(res, statusCodes.ReqSuccess, "Chat history cleared");
-  } catch (error) {
-    logger.error("Error in chat clearHistory controller:", error);
-    methods.sendResponse(res, statusCodes.InternalServerError);
-  }
-};
-
 export const chatController = {
+  listConversations,
+  createConversation,
+  updateConversation,
+  deleteConversation,
   ask,
   askStream,
   history,
-  clearHistory,
 };

@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './layouts/AppShell'
+import ChatHomeRedirect from './pages/ChatHomeRedirect'
 import ChatPage from './pages/ChatPage'
 import FeaturesPage from './pages/features/FeaturesPage'
 import KnowledgeBasePage from './pages/knowledge-base/KnowledgeBasePage'
@@ -19,7 +20,8 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
-            <Route index element={<ChatPage />} />
+            <Route index element={<ChatHomeRedirect />} />
+            <Route path="c/:conversationId" element={<ChatPage />} />
             <Route
               path="roles"
               element={
