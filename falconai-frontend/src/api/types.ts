@@ -46,6 +46,43 @@ export type Role = {
   roleFeatures?: RoleFeature[]
 }
 
+export type ManagedUser = {
+  id: string
+  email: string
+  fullName: string
+  roleId?: string
+  createdAt?: string
+  updatedAt?: string
+  role?: {
+    id: string
+    name: string
+    description?: string
+  } | null
+}
+
+export type NotificationType = 'info' | 'warn' | 'error'
+export type NotificationStatus = 'read' | 'un-read' | 'archived'
+
+export type AppNotification = {
+  id: string
+  userId: string
+  type: NotificationType
+  title: string
+  message: string
+  data?: {
+    broadcastId?: string
+    authorId?: string
+    authorName?: string
+    board?: boolean
+    [key: string]: unknown
+  }
+  status: NotificationStatus
+  readAt?: string | null
+  isDeleted?: boolean
+  createdAt: string
+  updatedAt?: string
+}
+
 export type KnowledgeDocumentStatus = 'pending' | 'indexed' | 'failed'
 
 export type KnowledgeDocument = {

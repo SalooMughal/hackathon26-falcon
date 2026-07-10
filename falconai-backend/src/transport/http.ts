@@ -5,6 +5,7 @@ import featureRouter from "@app/modules/features/routes";
 import knowledgeBaseRouter from "@app/modules/knowledge-base/routes";
 import notificationsRouter from "@app/modules/notifications/routes";
 import platformSettingsRouter from "@app/modules/platform-settings/routes";
+import profileRouter from "@app/modules/profile/routes";
 import rolesRouter from "@app/modules/roles/routes";
 import sessionsRouter from "@app/modules/sessions/routes";
 import usersRouter from "@app/modules/users/routes";
@@ -32,5 +33,6 @@ httpRouter.use("/v1/platform-settings", platformSettingsRouter);
 httpRouter.use("/v1/notifications", notificationsRouter);
 httpRouter.use("/v1/knowledge-base", knowledgeBaseRouter);
 httpRouter.use("/v1/chat", chatRouter);
+httpRouter.use("/v1/profile", profileRouter);
 
 export default httpRouter;

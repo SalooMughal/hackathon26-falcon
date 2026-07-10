@@ -22,17 +22,18 @@ export const getOneUserSchema = z.object({
   userId: z.uuid("Invalid user ID format"),
 });
 
+export const createUserSchema = z.object({
+  email: z.string().email("Invalid email").max(255),
+  fullName: z.string().min(1, "Full name is required").max(255, "Full name too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long"),
+  roleId: z.uuid("Invalid role ID format"),
+});
+
 export const updateUserSchema = z.object({
   userId: z.uuid("Invalid user ID format"),
   fullName: z.string().min(1, "Full name is required").max(255, "Full name too long").optional(),
-  location: z.string().max(255, "Location too long").optional(),
-  avatarUrl: z.string().url("Invalid avatar URL").max(500, "Avatar URL too long").optional(),
-  status: z.string().max(100, "Status too long").optional(),
-  dateOfBirth: z.string().date().optional(),
-  gender: z.string().max(50, "Gender too long").optional(),
-  country: z.string().max(100, "Country too long").optional(),
-  phone: z.string().max(20, "Phone number too long").optional(),
-  timeZone: z.string().max(100, "Time zone too long").optional(),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long").optional(),
+  roleId: z.uuid("Invalid role ID format").optional(),
 });
 
 export const deleteUserSchema = z.object({
@@ -50,6 +51,7 @@ export const assignRoleSchema = z
 export type IGetAllUsersInput = z.infer<typeof getAllUsersSchema>;
 export type IGetUserCountsInput = z.infer<typeof getUserCountsSchema>;
 export type IGetOneUserInput = z.infer<typeof getOneUserSchema>;
+export type ICreateUserInput = z.infer<typeof createUserSchema>;
 export type IUpdateUserInput = z.infer<typeof updateUserSchema>;
 export type IDeleteUserInput = z.infer<typeof deleteUserSchema>;
 export type IAssignRoleInput = z.infer<typeof assignRoleSchema>;

@@ -2,7 +2,7 @@ import { notificationsService } from "@app/modules/notifications/notifications.s
 
 export const notifications = {
   profileViewed: async (viewerId: string, viewedUserId: string, viewerName: string) => {
-    return await notificationsService.create({
+    return await notificationsService.createForUser({
       userId: viewedUserId,
       type: "info",
       title: "Profile Viewed",

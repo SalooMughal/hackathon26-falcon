@@ -5,10 +5,13 @@ import ChatPage from './pages/ChatPage'
 import FeaturesPage from './pages/features/FeaturesPage'
 import KnowledgeBasePage from './pages/knowledge-base/KnowledgeBasePage'
 import LoginPage from './pages/LoginPage'
+import NotificationsPage from './pages/notifications/NotificationsPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import PlatformSettingsPage from './pages/platform-settings/PlatformSettingsPage'
+import ProfilePage from './pages/profile/ProfilePage'
 import RoleDetailPage from './pages/roles/RoleDetailPage'
 import RolesPage from './pages/roles/RolesPage'
+import UsersPage from './pages/users/UsersPage'
 import ProtectedRoute from './routes/ProtectedRoute'
 import RequirePermission from './routes/RequirePermission'
 
@@ -50,7 +53,7 @@ export default function App() {
               path="users"
               element={
                 <RequirePermission feature="users">
-                  <PlaceholderPage />
+                  <UsersPage />
                 </RequirePermission>
               }
             />
@@ -66,7 +69,7 @@ export default function App() {
               path="notifications"
               element={
                 <RequirePermission feature="notifications">
-                  <PlaceholderPage />
+                  <NotificationsPage />
                 </RequirePermission>
               }
             />
@@ -98,7 +101,7 @@ export default function App() {
               path="profile"
               element={
                 <RequirePermission feature="profile">
-                  <PlaceholderPage />
+                  <ProfilePage />
                 </RequirePermission>
               }
             />

@@ -289,6 +289,38 @@
 
 /**
  * @swagger
+ * /v1/users/create:
+ *   post:
+ *     summary: Create a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, fullName, password, roleId]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               fullName:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               roleId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       200:
+ *         description: User created successfully
+ */
+
+/**
+ * @swagger
  * /v1/users/update:
  *   post:
  *     summary: Update a user's profile information

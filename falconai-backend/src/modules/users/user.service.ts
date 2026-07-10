@@ -3,8 +3,9 @@ import statusCodes from "@app/constants/statusCodes";
 import { roles, users, acls, notifications } from "@app/schema/tables";
 import logger from "@app/services/logging/logger";
 import { and, eq, ilike, or, sql, ne, gte, lte, desc } from "drizzle-orm";
-import { IUpdateUserInput, IGetAllUsersInput, IGetUserCountsInput } from "./validations";
+import { ICreateUserInput, IUpdateUserInput, IGetAllUsersInput, IGetUserCountsInput } from "./validations";
 import { IUser } from "@app/schema/types";
+import { methods } from "@app/utils/methods";
 
 const getAllUsers = async (filters: IGetAllUsersInput) => {
   try {
@@ -131,7 +132,56 @@ const getOneUser = async (userId: string) => {
   }
 };
 
-const updateUser = async (userId: string, updateData: Omit<IUpdateUserInput, "userId">) => {
+const createUser = async (input: ICreateUserInput) => {
+  try {
+    const email = input.email.toLowerCase().trim();
+    const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    if (existing) return { error: statusCodes.UserExists };
+
+    const [role] = await db.select().from(roles).where(eq(roles.id, input.roleId)).limit(1);
+    if (!role) return { error: statusCodes.RoleNotFound };
+
+    const [superAdminRole] = await db.select().from(roles).where(eq(roles.name, "super-admin")).limit(1);
+    if (superAdminRole && role.id === superAdminRole.id) {
+      return { error: statusCodes.PermissionDenied };
+    }
+
+    const [created] = await db
+      .insert(users)
+      .values({
+        email,
+        fullName: input.fullName.trim(),
+        password: methods.encrypt(input.password),
+        roleId: role.id,
+        emailVerified: true,
+        profileComplete: true,
+      })
+      .returning({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+        roleId: users.roleId,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      });
+
+    return {
+      user: {
+        ...created,
+        role: {
+          id: role.id,
+          name: role.name,
+          description: role.description,
+        },
+      },
+    };
+  } catch (error) {
+    logger.error(`Error in createUser: ${error instanceof Error ? error.message : String(error)}`);
+    return { error: statusCodes.InternalServerError };
+  }
+};
+
+const updateUser = async (userId: string, updateData: Omit<IUpdateUserInput, "userId">, requestingUserId?: string) => {
   try {
     const [existingUser] = await db.select().from(users).where(eq(users.id, userId));
     if (!existingUser) return { error: statusCodes.UserNotFound };
@@ -142,10 +192,48 @@ const updateUser = async (userId: string, updateData: Omit<IUpdateUserInput, "us
       return { error: statusCodes.PermissionDenied };
     }
 
-    const updatePayload: any = { ...updateData, updatedAt: new Date() };
-    const [updatedUser] = await db.update(users).set(updatePayload).where(eq(users.id, userId)).returning();
+    const updatePayload: Record<string, unknown> = { updatedAt: new Date() };
 
-    return { user: updatedUser };
+    if (updateData.fullName !== undefined) {
+      updatePayload.fullName = updateData.fullName.trim();
+    }
+
+    if (updateData.password) {
+      updatePayload.password = methods.encrypt(updateData.password);
+    }
+
+    if (updateData.roleId) {
+      if (requestingUserId && requestingUserId === userId) {
+        return { error: statusCodes.PermissionDenied };
+      }
+
+      const [role] = await db.select().from(roles).where(eq(roles.id, updateData.roleId)).limit(1);
+      if (!role) return { error: statusCodes.RoleNotFound };
+      if (superAdminRole && role.id === superAdminRole.id) {
+        return { error: statusCodes.PermissionDenied };
+      }
+      updatePayload.roleId = role.id;
+    }
+
+    const [updatedUser] = await db.update(users).set(updatePayload).where(eq(users.id, userId)).returning({
+      id: users.id,
+      email: users.email,
+      fullName: users.fullName,
+      roleId: users.roleId,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt,
+    });
+
+    const [role] = await db.select().from(roles).where(eq(roles.id, updatedUser.roleId)).limit(1);
+
+    return {
+      user: {
+        ...updatedUser,
+        role: role
+          ? { id: role.id, name: role.name, description: role.description }
+          : null,
+      },
+    };
   } catch (error) {
     logger.error(`Error in updateUser: ${error instanceof Error ? error.message : String(error)}`);
     return { error: statusCodes.InternalServerError };
@@ -307,6 +395,7 @@ export const userService = {
   getAllUsers,
   getUserCounts,
   getOneUser,
+  createUser,
   updateUser,
   deleteUser,
   assignRole,

@@ -3,7 +3,7 @@ import logger from "@app/services/logging/logger";
 import { Request, Response } from "express";
 import { userService } from "./user.service";
 import { methods } from "@app/utils/methods";
-import { IGetAllUsersInput, IGetUserCountsInput, IGetOneUserInput, IUpdateUserInput, IDeleteUserInput, IAssignRoleInput } from "./validations";
+import { IGetAllUsersInput, IGetUserCountsInput, IGetOneUserInput, ICreateUserInput, IUpdateUserInput, IDeleteUserInput, IAssignRoleInput } from "./validations";
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
@@ -47,11 +47,24 @@ const getOneUser = async (req: Request, res: Response) => {
   }
 };
 
+const createUser = async (req: Request, res: Response) => {
+  try {
+    const input = req.body as ICreateUserInput;
+    const { error, user } = await userService.createUser(input);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "User created successfully", { user });
+  } catch (error) {
+    logger.error("Error in createUser:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
 const updateUser = async (req: Request, res: Response) => {
   try {
     const { userId, ...updateData } = req.body as IUpdateUserInput;
 
-    const { error, user } = await userService.updateUser(userId, updateData);
+    const { error, user } = await userService.updateUser(userId, updateData, req.user?.id);
     if (error) return methods.sendResponse(res, error);
 
     methods.sendResponse(res, statusCodes.ReqSuccess, "User updated successfully", { user });
@@ -93,6 +106,7 @@ export const userController = {
   getAllUsers,
   getUserCounts,
   getOneUser,
+  createUser,
   updateUser,
   deleteUser,
   assignRole,

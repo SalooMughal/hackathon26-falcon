@@ -23,7 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { feature: 'sessions', label: 'Sessions', path: '/sessions', icon: 'sessions' },
   {
     feature: 'notifications',
-    label: 'Notifications',
+    label: 'Noticeboard',
     path: '/notifications',
     icon: 'notifications',
   },

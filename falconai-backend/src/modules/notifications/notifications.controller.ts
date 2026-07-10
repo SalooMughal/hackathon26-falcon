@@ -3,11 +3,21 @@ import { methods } from "@app/utils/methods";
 import statusCodes from "@app/constants/statusCodes";
 import logger from "@app/services/logging/logger";
 import { notificationsService } from "./notifications.service";
-import { ICreateNotificationInput, IGetAllNotificationsInput, IGetCountsInput, IGetOneNotificationInput, IUpdateStatusInput, IDeleteNotificationInput, IMarkAllReadInput } from "./validations";
+import {
+  ICreateNotificationInput,
+  IGetAllNotificationsInput,
+  IGetCountsInput,
+  IGetOneNotificationInput,
+  IUpdateStatusInput,
+  IDeleteNotificationInput,
+  IMarkAllReadInput,
+  ISudoCreateNotificationInput,
+  IUpdateNoticeInput,
+} from "./validations";
 
 const getAll = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
+    const userId = req.user?.id as string;
     const filters = req.query as unknown as IGetAllNotificationsInput;
 
     const { error, notifications, pagination } = await notificationsService.getAll(userId, filters);
@@ -22,7 +32,7 @@ const getAll = async (req: Request, res: Response) => {
 
 const getOne = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
+    const userId = req.user?.id as string;
     const { id } = req.query as unknown as IGetOneNotificationInput;
 
     const { error, notification } = await notificationsService.getOne(userId, id);
@@ -35,11 +45,34 @@ const getOne = async (req: Request, res: Response) => {
   }
 };
 
+const create = async (req: Request, res: Response) => {
+  try {
+    const user = req.user;
+    if (!user?.id) return methods.sendResponse(res, statusCodes.Unauthorized);
+
+    const input = req.body as ICreateNotificationInput;
+    const { error, notification, broadcastId, recipients } = await notificationsService.createBroadcast(
+      { id: user.id, fullName: user.fullName || "Admin" },
+      input,
+    );
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Notice posted to the board", {
+      notification,
+      broadcastId,
+      recipients,
+    });
+  } catch (error) {
+    logger.error("Error in notifications.create:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
 const sudoCreate = async (req: Request, res: Response) => {
   try {
-    const { userId, type, title, message, data } = req.body as ICreateNotificationInput;
+    const input = req.body as ISudoCreateNotificationInput;
 
-    const { error, notification } = await notificationsService.create({ userId, type, title, message, data });
+    const { error, notification } = await notificationsService.createForUser(input);
     if (error) return methods.sendResponse(res, error);
 
     methods.sendResponse(res, statusCodes.ReqSuccess, "Notification created successfully", { notification });
@@ -49,12 +82,24 @@ const sudoCreate = async (req: Request, res: Response) => {
   }
 };
 
+const updateNotice = async (req: Request, res: Response) => {
+  try {
+    const input = req.body as IUpdateNoticeInput;
+    const { error, notification, updated } = await notificationsService.updateBroadcast(input);
+    if (error) return methods.sendResponse(res, error);
+
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Notice updated", { notification, updated });
+  } catch (error) {
+    logger.error("Error in notifications.updateNotice:", error);
+    methods.sendResponse(res, statusCodes.InternalServerError);
+  }
+};
+
 const markAllRead = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
+    const userId = req.user?.id as string;
     const { id } = req.body as IMarkAllReadInput;
 
-    // If id is provided, mark single notification as read
     if (id) {
       const { error, notification } = await notificationsService.markAllRead(userId, id);
       if (error) return methods.sendResponse(res, error);
@@ -63,7 +108,6 @@ const markAllRead = async (req: Request, res: Response) => {
       return;
     }
 
-    // Otherwise, mark all notifications as read
     const { error } = await notificationsService.markAllRead(userId);
     if (error) return methods.sendResponse(res, error);
 
@@ -76,7 +120,7 @@ const markAllRead = async (req: Request, res: Response) => {
 
 const updateStatus = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
+    const userId = req.user?.id as string;
     const { id, status } = req.body as IUpdateStatusInput;
 
     const { error, notification } = await notificationsService.updateStatus(userId, id, status);
@@ -91,13 +135,15 @@ const updateStatus = async (req: Request, res: Response) => {
 
 const deleteNotification = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
-    const { id } = req.body as IDeleteNotificationInput;
+    const userId = req.user?.id as string;
+    const { id, broadcastId } = req.body as IDeleteNotificationInput;
 
-    const { error } = await notificationsService.deleteOne(userId, id);
+    // Board-wide delete requires delete permission (already checked by middleware on /delete)
+    const canDeleteBoard = Boolean(broadcastId);
+    const { error, deleted } = await notificationsService.deleteOne(userId, id, broadcastId, canDeleteBoard);
     if (error) return methods.sendResponse(res, error);
 
-    methods.sendResponse(res, statusCodes.ReqSuccess, "Notification deleted");
+    methods.sendResponse(res, statusCodes.ReqSuccess, "Notification deleted", { deleted });
   } catch (error) {
     logger.error("Error in notifications.deleteNotification:", error);
     methods.sendResponse(res, statusCodes.InternalServerError);
@@ -106,7 +152,7 @@ const deleteNotification = async (req: Request, res: Response) => {
 
 const getCounts = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id as string;
+    const userId = req.user?.id as string;
     const filters = req.query as unknown as IGetCountsInput;
 
     const { error, total, byStatus, byType } = await notificationsService.getCounts(userId, filters);
@@ -122,7 +168,9 @@ const getCounts = async (req: Request, res: Response) => {
 export const notificationsController = {
   getAll,
   getOne,
+  create,
   sudoCreate,
+  updateNotice,
   markAllRead,
   updateStatus,
   deleteNotification,
